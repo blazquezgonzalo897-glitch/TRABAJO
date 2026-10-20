@@ -1,0 +1,13 @@
+{
+  "name": "organizador-trabajos",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Organizador de trabajos universitarios con IA (Netlify AI Gateway)",
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": ">=0.65.0"
+  }
+}
