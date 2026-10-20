@@ -14,9 +14,14 @@ Con esos datos la app ordena tus trabajos por **prioridad** y, al tocar uno, te 
 ```
 organizador-trabajos/
 ├── netlify.toml                    # Configuración de Netlify
-├── package.json                    # Dependencia: @anthropic-ai/sdk
-├── netlify/functions/analizar.mjs  # Función que llama a la IA  (/api/analizar)
+├── netlify/lib/gemini.js           # Llamada a Google Gemini en streaming
+├── netlify/edge-functions/analizar.js  # Analiza el trabajo  (/api/analizar)
+├── netlify/edge-functions/duda.js      # Chat de dudas      (/api/duda)
 └── public/index.html               # La app (interfaz, lectura de archivos, prioridad)
+
+Las llamadas a la IA son Edge Functions con respuesta en directo (streaming): el texto
+llega poco a poco, así que no las corta el límite de tiempo de las funciones normales.
+La clave de Gemini va en la variable `GEMINI_API_KEY` de Netlify.
 ```
 
 ## Desplegar

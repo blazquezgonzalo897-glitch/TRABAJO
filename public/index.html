@@ -234,13 +234,53 @@ async function leerFuentes(files){
 const fuentesParaIA = (t) => t.fuentes.map(f => ({ nombre: f.nombre, texto: f.texto }));
 
 // ---------- Llamadas a la IA ----------
-async function llamar(url, datos){
+// Llamada en directo: la IA va enviando el texto poco a poco.
+// alAvanzar(textoHastaAhora, estado) se llama cada vez que llega algo nuevo.
+async function llamarEnDirecto(url, datos, alAvanzar){
   const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos) });
-  const bruto = await res.text();
-  let data;
-  try { data = JSON.parse(bruto); }
-  catch { throw new Error(`El servidor respondió con error ${res.status}` + (res.status >= 500 ? " (probablemente la IA tardó demasiado). Inténtalo de nuevo." : ". ¿Está desplegada la función?")); }
-  if (!res.ok) throw new Error(data.error || "Error del servidor");
+  if (!res.ok || !res.body){
+    const bruto = await res.text().catch(() => "");
+    let msg; try { msg = JSON.parse(bruto).error; } catch {}
+    throw new Error(msg || `El servidor respondió con error ${res.status}. ¿Está desplegada la función?`);
+  }
+  const lector = res.body.getReader(), dec = new TextDecoder();
+  let buffer = "", texto = "", terminado = false;
+  const procesar = (linea) => {
+    if (!linea.trim()) return;
+    let ev; try { ev = JSON.parse(linea); } catch { return; }
+    if (ev.error) throw new Error(ev.error);
+    if (ev.t) { texto += ev.t; alAvanzar?.(texto, null); }
+    if (ev.estado) alAvanzar?.(texto, ev.estado);
+    if (ev.fin) terminado = true;
+  };
+  while (true){
+    const { value, done } = await lector.read();
+    if (done) break;
+    buffer += dec.decode(value, { stream: true });
+    let i;
+    while ((i = buffer.indexOf("\n")) !== -1){ procesar(buffer.slice(0, i)); buffer = buffer.slice(i + 1); }
+  }
+  procesar(buffer);
+  if (!terminado) throw new Error("Se cortó la conexión con la IA. Inténtalo de nuevo.");
+  return texto;
+}
+function extraerJSON(texto){
+  const ini = texto.indexOf("{"), fin = texto.lastIndexOf("}");
+  if (ini === -1 || fin === -1) throw new Error("La IA no devolvió una respuesta válida. Inténtalo de nuevo.");
+  try { return JSON.parse(texto.slice(ini, fin + 1)); }
+  catch { throw new Error("La respuesta de la IA llegó incompleta. Inténtalo de nuevo."); }
+}
+// Analiza el trabajo mostrando el progreso en el botón.
+async function analizarEnDirecto(datos, btn, textoBase){
+  const texto = await llamarEnDirecto("/api/analizar", datos, (txt, estado) => {
+    const pasos = (txt.match(/"accion"\s*:/g) || []).length;
+    const msg = pasos ? `${textoBase}: ${pasos} paso${pasos > 1 ? "s" : ""}…` : (estado || `${textoBase}…`);
+    btn.innerHTML = `<span class="spinner"></span>${esc(msg)}`;
+  });
+  const data = extraerJSON(texto);
+  data.horasEstimadas = Math.max(0.5, Number(data.horasEstimadas) || 2);
+  data.dificultad = Math.min(5, Math.max(1, Math.round(Number(data.dificultad) || 3)));
+  data.fases = Array.isArray(data.fases) ? data.fases : [];
   return data;
 }
 function aplicarAnalisis(t, data){
@@ -271,10 +311,10 @@ $("btnAnalizar").onclick = async () => {
     const fuentes = await leerFuentes($("fuentesForm").files);
     const notas = $("notas").value;
 
-    const data = await llamar("/api/analizar", {
+    const data = await analizarEnDirecto({
       contenido, fechaEntrega: fecha, nombreArchivo: file?.name, notas,
       fuentes: fuentes.map(f => ({ nombre: f.nombre, texto: f.texto }))
-    });
+    }, btn, "Creando guía");
 
     const t = { id: crypto.randomUUID(), creado: Date.now(), fechaEntrega: fecha,
                 archivo: file?.name || "Texto pegado", contenido, notas, fuentes };
@@ -598,10 +638,10 @@ async function rehacerGuia(t){
   const btn = $("btnRehacer");
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Rehaciendo guía…';
   try {
-    const data = await llamar("/api/analizar", {
+    const data = await analizarEnDirecto({
       contenido: t.contenido, fechaEntrega: t.fechaEntrega, nombreArchivo: t.archivo,
       notas: t.notas, fuentes: fuentesParaIA(t)
-    });
+    }, btn, "Rehaciendo guía");
     aplicarAnalisis(t, data);
     guardar(); pintarDetalle(); window.scrollTo(0,0);
     aviso("Guía actualizada con tus fuentes");
@@ -627,11 +667,12 @@ function cerrarDuda(){
   document.body.style.overflow = "";
   repintar();
 }
-function pintarChat(cargando){
+function pintarChat(cargando, parcial){
   const p = actual().pasos[dudaIdx];
   let html = p.chat.length ? "" : `<div class="muted" style="padding:8px 0">${esc(p.detalle)}<br><br>Pregunta lo que quieras sobre este paso o pulsa «Dame pasos más detallados».</div>`;
   html += p.chat.map(m => `<div class="msg ${m.role}">${esc(m.content)}</div>`).join("");
-  if (cargando) html += `<div class="msg assistant"><span class="spinner"></span>Pensando…</div>`;
+  if (parcial) html += `<div class="msg assistant">${esc(parcial)}</div>`;
+  else if (cargando) html += `<div class="msg assistant"><span class="spinner"></span>Pensando…</div>`;
   $("dudaMsgs").innerHTML = html;
   $("dudaMsgs").scrollTop = $("dudaMsgs").scrollHeight;
 }
@@ -645,12 +686,12 @@ async function enviarDuda(pregunta){
   $("btnEnviarDuda").disabled = $("btnDetallar").disabled = true;
   pintarChat(true);
   try {
-    const data = await llamar("/api/duda", {
+    const respuesta = await llamarEnDirecto("/api/duda", {
       trabajo: { titulo: t.titulo, asignatura: t.asignatura, resumen: t.resumen },
       paso: { accion: p.accion, detalle: p.detalle },
       fuentes: fuentesParaIA(t), historial, pregunta
-    });
-    p.chat.push({ role: "assistant", content: data.respuesta });
+    }, (txt) => { if (txt) pintarChat(true, txt); });
+    p.chat.push({ role: "assistant", content: respuesta.trim() });
     guardar();
   } catch (e){
     p.chat.pop();

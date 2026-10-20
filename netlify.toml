@@ -1,6 +1,7 @@
 [build]
   publish = "public"
-  functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
 
-[functions]
-  node_bundler = "esbuild"
+
+# Las llamadas a la IA (/api/analizar y /api/duda) son Edge Functions con streaming,
+# en netlify/edge-functions. Así no las corta el límite de ~10 s de las funciones normales.
