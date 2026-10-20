@@ -8,10 +8,20 @@
 //   {"error":"..."}    algo falló
 //   {"fin":true}       terminado
 
-const INTENTOS = () => [
+const MODELOS = () => [
   { modelo: Netlify.env.get("GEMINI_MODEL") || "gemini-3.8-flash", pensar: "low" },
   { modelo: "gemini-3.5-flash-lite" },
 ];
+// Si Google está saturado (503/429), se vuelve a probar con todos los modelos
+// tras esperar estos segundos.
+const ESPERAS_REINTENTO = [3, 8, 15];
+const INTENTOS = () => {
+  const lista = [];
+  [0, ...ESPERAS_REINTENTO].forEach((espera, ronda) =>
+    MODELOS().forEach((m, i) => lista.push({ ...m, espera: i === 0 ? espera : 0, ronda })));
+  return lista;
+};
+const dormir = (s) => new Promise((r) => setTimeout(r, s * 1000));
 
 // Si en este tiempo Gemini no ha empezado a escribir, se prueba el siguiente modelo.
 const ESPERA_PRIMER_TEXTO_MS = 45000;
@@ -62,7 +72,11 @@ async function generar({ sistema, mensajes, maxTokens, modoJSON }, enviar) {
   if (!clave) throw new Error("Falta la variable GEMINI_API_KEY en Netlify");
 
   let ultimoError;
-  for (const { modelo, pensar } of INTENTOS()) {
+  for (const { modelo, pensar, espera, ronda } of INTENTOS()) {
+    if (espera) {
+      enviar({ estado: `Google está saturado, reintentando (${ronda}/${ESPERAS_REINTENTO.length})…` });
+      await dormir(espera);
+    }
     const cuerpo = {
       systemInstruction: { parts: [{ text: sistema }] },
       contents: mensajes.map((m) => ({
@@ -103,6 +117,9 @@ async function generar({ sistema, mensajes, maxTokens, modoJSON }, enviar) {
       ultimoError = new Error(`Gemini (${modelo}) error ${res.status}: ${msg}`);
       const reintentable = [404, 429, 500, 503].includes(res.status) || (res.status === 400 && /think/i.test(msg));
       if (!reintentable) break; // p. ej. clave mala: no tiene sentido reintentar
+      if (res.status === 503 || res.status === 429) {
+        ultimoError = new Error("Los servidores de Google están saturados ahora mismo. Espera un par de minutos y vuelve a intentarlo.");
+      }
       enviar({ estado: "Probando con otro modelo…" });
       continue;
     }
