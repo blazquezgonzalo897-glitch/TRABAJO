@@ -1,12 +1,18 @@
-// Analiza un trabajo universitario con Google Gemini y crea la guía de micro acciones.
+// Analiza UN trabajo universitario con Google Gemini y crea (o adapta) su guía de micro metas.
 // Edge Function con respuesta en directo (streaming): no la corta el límite de tiempo de Netlify.
-import { json, textoFuentes, respuestaEnDirecto } from "../lib/gemini.js";
+//
+// Aislamiento: cada petición trae solo el enunciado, las instrucciones y las fuentes de un
+// trabajo. La función no guarda nada, así que la IA nunca ve datos de otros trabajos.
+import { json, textoFuentes, textoRitmo, respuestaEnDirecto, TIPOS } from "../lib/gemini.js";
 
-const MAX_CONTENIDO = 30000;
-const MAX_FUENTES = 20000;
+const MAX_ENUNCIADO = 30000;
+const MAX_FUENTES = 40000;
+const MAX_INSTRUCCIONES = 4000;
+const MAX_HECHOS = 60;
 
-const PROMPT_SISTEMA = `Eres un asistente académico experto en planificación y en dividir trabajos grandes en micro acciones.
-Recibirás el enunciado de un trabajo universitario, su fecha de entrega y, a veces, fuentes de apoyo (apuntes, lecturas, rúbricas).
+const PROMPT_SISTEMA = `Eres un asistente académico experto en planificación y en dividir trabajos grandes en micro metas.
+Recibirás UN trabajo universitario: su enunciado (uno o varios documentos), su fecha de entrega, las instrucciones del estudiante y, a veces, fuentes de apoyo (apuntes, lecturas, rúbricas).
+Todo lo que recibes pertenece a este único trabajo. Usa solo esa información: no mezcles contenido de otros trabajos ni inventes fuentes.
 Responde SOLO con un objeto JSON válido (sin markdown, sin texto extra) con esta forma exacta:
 {
   "titulo": "título corto y claro del trabajo",
@@ -14,23 +20,33 @@ Responde SOLO con un objeto JSON válido (sin markdown, sin texto extra) con est
   "resumen": "qué hay que entregar, en 1-2 frases",
   "horasEstimadas": número (horas reales de trabajo para un estudiante medio),
   "dificultad": número entero 1-5 (carga mental: 1 = mecánico, 5 = muy exigente, creativo o técnico),
-  "justificacion": "por qué esas horas y esa dificultad, en 1-2 frases",
+  "justificacion": "por qué esas horas y esa dificultad, y cómo has aplicado las instrucciones, en 1-3 frases",
   "fases": [
     {
       "nombre": "nombre de la fase",
       "pasos": [
-        { "accion": "micro acción concreta que empieza por un verbo", "detalle": "cómo hacerla exactamente", "minutos": número entre 5 y 25 }
+        {
+          "accion": "micro meta concreta que empieza por un verbo",
+          "detalle": "cómo hacerla exactamente",
+          "minutos": número entre 5 y 25 (lo que tardaría un estudiante medio),
+          "tipo": "${TIPOS.join('" | "')}",
+          "fuente": "nombre EXACTO del documento a consultar en este paso (o vacío si no hace falta)"
+        }
       ]
     }
   ]
 }
-Reglas para las micro acciones:
-- Cada paso debe poder empezarse sin pensar: concreto, pequeño y con un resultado visible (p. ej. "Abre un documento nuevo y escribe el título", no "Investiga el tema").
-- Entre 10 y 20 pasos en total, repartidos en 3-5 fases ordenadas. Detalles breves (máximo 20 palabras).
-- Si hay fuentes, úsalas: indica en el detalle qué fuente consultar cuando sea útil y sigue la rúbrica si la hay.
-- El primer paso debe ser ridículamente fácil (menos de 5 minutos) para vencer la procrastinación.
+Reglas:
+- INSTRUCCIONES DEL ESTUDIANTE: tienen prioridad. Si piden un enfoque, un orden, un formato, un tamaño de paso, una extensión o un plazo, aplícalo en las micro metas. Si contradicen el enunciado, sigue el enunciado y explícalo en la justificación.
+- FUENTES: basa los pasos en ellas. Cuando un paso deba usar una fuente, pon su nombre exacto en "fuente" y di en el detalle qué parte mirar (tema, apartado, página…) si se puede deducir. Si hay rúbrica o criterios de evaluación, cubre cada criterio con algún paso.
+- Cada paso debe poder empezarse sin pensar: concreto, pequeño y con un resultado visible (p. ej. "Abre un documento nuevo y escribe el título", no "Investiga el tema"). Detalles breves (máximo 25 palabras).
+- Número de pasos proporcional al trabajo: más o menos uno por cada 15-20 minutos de trabajo, entre 8 y 40 en total, repartidos en 3-6 fases ordenadas.
+- "tipo" clasifica el paso: lectura (leer o estudiar), investigacion (buscar información), organizacion (esquemas, planificar), escritura (redactar), calculo (problemas, ejercicios), programacion (código), diseno (diapositivas, gráficos, maquetar), revision (revisar o corregir), entrega (subir, imprimir, enviar), otro.
+- Si se indica el RITMO del estudiante: "minutos" sigue siendo el tiempo de un estudiante medio (la app aplica su ritmo después), pero en los tipos en los que va más lento divide los pasos en partes más pequeñas, para que cada uno le lleve como mucho unos 25 minutos reales.
 - Incluye un paso final de revisión y otro de entrega.
 - Escribe todo en español.`;
+
+const lista = (x) => (Array.isArray(x) ? x : []);
 
 export default async (req) => {
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
@@ -42,26 +58,52 @@ export default async (req) => {
     return json({ error: "Cuerpo de la petición no válido" }, 400);
   }
 
-  const { contenido, fechaEntrega, nombreArchivo, notas, fuentes } = body || {};
-  if (!contenido || !fechaEntrega) {
-    return json({ error: "Faltan el contenido del trabajo o la fecha de entrega" }, 400);
+  const { fechaEntrega, ritmo, modo } = body || {};
+  // Formato actual: enunciados[] + fuentes[] + instrucciones. Se acepta también el antiguo (contenido + notas).
+  const enunciados = lista(body?.enunciados).filter((d) => String(d?.texto || "").trim());
+  if (!enunciados.length && body?.contenido) enunciados.push({ nombre: body.nombreArchivo || "Enunciado", texto: body.contenido });
+  const fuentes = lista(body?.fuentes).filter((d) => String(d?.texto || "").trim());
+  const instrucciones = String(body?.instrucciones ?? body?.notas ?? "").trim().slice(0, MAX_INSTRUCCIONES);
+  const adaptar = modo === "adaptar";
+  const hechos = lista(body?.hechos).map((h) => String(h || "").trim().slice(0, 200)).filter(Boolean).slice(0, MAX_HECHOS);
+
+  if (!enunciados.length || !fechaEntrega) {
+    return json({ error: "Faltan el enunciado del trabajo o la fecha de entrega" }, 400);
   }
 
   const hoy = new Date().toISOString().slice(0, 10);
+  const ritmoTxt = textoRitmo(ritmo);
   const fuentesTxt = textoFuentes(fuentes, MAX_FUENTES);
+  const nombres = [...enunciados, ...fuentes].map((d) => `«${String(d.nombre || "sin nombre").slice(0, 200)}»`).join(", ");
 
-  const mensaje = `Fecha de hoy: ${hoy}
+  let mensaje = `Fecha de hoy: ${hoy}
 Fecha de entrega: ${fechaEntrega}
-Archivo: ${nombreArchivo || "sin nombre"}
-${notas ? `Notas del estudiante: ${notas}\n` : ""}
---- ENUNCIADO DEL TRABAJO ---
-${String(contenido).slice(0, MAX_CONTENIDO)}
+Documentos de este trabajo (los únicos que puedes citar en "fuente"): ${nombres}
+
+=== INSTRUCCIONES DEL ESTUDIANTE ===
+${instrucciones || "(no ha escrito instrucciones)"}
+${ritmoTxt ? `\n=== RITMO DEL ESTUDIANTE ===\n${ritmoTxt}\n` : ""}
+=== ENUNCIADO DEL TRABAJO ===
+${textoFuentes(enunciados, MAX_ENUNCIADO, "DOCUMENTO DEL ENUNCIADO")}
 ${fuentesTxt ? `\n=== FUENTES DE APOYO ===\n${fuentesTxt}` : ""}`;
+
+  if (adaptar) {
+    mensaje += `
+
+=== MODO ADAPTAR ===
+El estudiante ya ha empezado. Crea SOLO las micro metas que faltan, adaptadas a las instrucciones y fuentes de arriba.
+${hechos.length ? `Pasos ya completados (no los repitas, continúa desde aquí):\n${hechos.map((h, i) => `${i + 1}. ${h}`).join("\n")}` : "Aún no ha completado ningún paso."}
+En este modo "horasEstimadas" son las horas que FALTAN.`;
+  } else {
+    mensaje += `
+
+El primer paso debe ser ridículamente fácil (menos de 5 minutos) para vencer la procrastinación.`;
+  }
 
   return respuestaEnDirecto({
     sistema: PROMPT_SISTEMA,
     mensajes: [{ role: "user", content: mensaje }],
-    maxTokens: 8192,
+    maxTokens: 12000,
     json: true,
   });
 };

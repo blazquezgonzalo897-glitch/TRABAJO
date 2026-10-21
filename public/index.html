@@ -24,19 +24,22 @@ header{padding:20px 16px 8px;max-width:820px;margin:auto;display:flex;align-item
 h1{font-family:Fraunces,serif;font-size:26px;margin:0}
 h2{font-family:Fraunces,serif;font-size:20px;margin:0 0 12px}
 main{max-width:820px;margin:auto;padding:8px 16px 60px}
+body.con-barra main{padding-bottom:110px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
 label{display:block;font-weight:500;margin:10px 0 6px}
 input,textarea,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
 textarea{min-height:70px;resize:vertical}
 button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 16px;background:var(--accent);color:#fff;font-weight:600}
+@media (prefers-color-scheme: dark){button{color:#10201b}}
 button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
 button.peligro{background:transparent;color:var(--p1);border:1px solid var(--p1)}
 button.mini{padding:5px 10px;font-size:13px;font-weight:500;background:transparent;color:var(--muted);border:1px solid var(--line)}
+button.mini.on{background:var(--accent);color:var(--card);border-color:var(--accent)}
 button:disabled{opacity:.5;cursor:wait}
 .row{display:flex;gap:10px;flex-wrap:wrap}
 .row>*{flex:1;min-width:140px}
 .muted{color:var(--muted);font-size:13px}
-.tarea{display:flex;gap:12px;align-items:center;cursor:pointer;transition:transform .1s}
+.tarea{display:flex;gap:12px;align-items:center;cursor:pointer;transition:transform .1s;border-left:5px solid var(--c,var(--line))}
 .tarea:active{transform:scale(.99)}
 .rank{font-family:Fraunces,serif;font-size:22px;width:30px;text-align:center;color:var(--muted)}
 .tarea .info{flex:1;min-width:0}
@@ -50,40 +53,102 @@ button:disabled{opacity:.5;cursor:wait}
 .fase h3{font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:18px 0 8px}
 .paso{display:flex;gap:10px;padding:10px;border-radius:10px;align-items:flex-start}
 .paso.actual{background:var(--accent-soft)}
-.paso input{width:20px;height:20px;margin-top:2px;flex:none}
+.paso input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--accent)}
 .paso .cuerpo{flex:1;min-width:0}
 .paso.hecho .accion{text-decoration:line-through;color:var(--muted)}
 .paso .detalle{font-size:13px;color:var(--muted)}
+.paso .meta-paso{font-size:12px;color:var(--muted);margin-top:3px}
+.acciones-paso{display:flex;gap:6px;flex:none}
 .foco{text-align:center;padding:28px 16px}
 .foco .accion{font-family:Fraunces,serif;font-size:22px;margin:10px 0}
-.fuente{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
-.fuente:last-of-type{border-bottom:0}
-.fuente .nombre{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .empty{text-align:center;padding:40px 10px;color:var(--muted)}
 .error{color:var(--p1);margin-top:10px}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:g .7s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes g{to{transform:rotate(360deg)}}
 .hidden{display:none !important}
+.punto{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none}
+/* Documentos */
+.docs{display:flex;flex-direction:column;gap:6px;margin:6px 0 10px}
+.doc{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.doc.mal{border-color:var(--p1)}
+.doc .ico{font-size:18px}
+.doc .info{flex:1;min-width:0}
+.doc .nombre{overflow:hidden;font-weight:500;line-height:1.3;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.doc select{width:auto;padding:6px 8px;font-size:13px;background:var(--card)}
+.docs-vacio{border:1px dashed var(--line);border-radius:10px;padding:14px;text-align:center;color:var(--muted);font-size:13px}
+.aislado{font-size:12px;color:var(--muted);margin-top:10px}
+.cambios{background:var(--accent-soft);border-radius:10px;padding:8px 12px;font-size:13px;margin-top:10px}
 /* Chat de dudas */
 .fondo{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+#fondoDuda{z-index:30}
 .hoja{background:var(--card);width:100%;max-width:820px;height:88vh;border-radius:18px 18px 0 0;display:flex;flex-direction:column;padding:16px}
 .hoja-cab{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px}
 .hoja-cab .t{flex:1;font-weight:600}
 .msgs{flex:1;overflow-y:auto;padding:4px 0}
 .msg{padding:10px 12px;border-radius:12px;margin:8px 0;white-space:pre-wrap;word-wrap:break-word}
 .msg.user{background:var(--accent);color:#fff;margin-left:15%}
+@media (prefers-color-scheme: dark){.msg.user{color:#10201b}}
 .msg.assistant{background:var(--accent-soft);margin-right:8%}
 .entrada{display:flex;gap:8px;padding-top:8px}
 .entrada textarea{min-height:44px;height:44px;flex:1}
 /* Pestañas y plan de hoy */
 .tabs{display:flex;gap:6px;background:var(--line);padding:4px;border-radius:12px;margin-bottom:14px}
-.tabs button{flex:1;background:transparent;color:var(--muted);padding:8px}
+.tabs button{flex:1;background:transparent;color:var(--muted);padding:8px 4px;font-size:14px}
 .tabs button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .grupo h3{font-size:16px;margin:0 0 2px}
 .hasta{font-size:13px;color:var(--accent);font-weight:600;margin:6px 0 4px}
 .alerta{background:#fbe9e5;color:#8a2a1a;border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:14px}
 @media (prefers-color-scheme: dark){.alerta{background:#3a1f19;color:#f2b8aa}}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;z-index:20;max-width:90%;text-align:center}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;z-index:40;max-width:90%;text-align:center}
+body.con-barra .toast{bottom:84px}
+/* Tu ritmo */
+.ritmo{margin-top:10px;font-size:14px}
+.ritmo summary{cursor:pointer;color:var(--muted)}
+.ritmo .chips{margin:8px 0}
+.ritmo button{margin-top:8px}
+/* Calendario */
+.cal-cab{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cal-cab h2{flex:1;margin:0}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal .sem{text-align:center;font-size:12px;color:var(--muted);font-weight:600;padding-bottom:2px}
+.dia{position:relative;min-height:54px;border-radius:10px;background:var(--bg);border:1px solid transparent;padding:5px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-size:14px;font-variant-numeric:tabular-nums}
+.dia.vacio{visibility:hidden}
+.dia.pasado{opacity:.55}
+.dia.hoy{border-color:var(--accent);font-weight:600}
+.dia.sel{background:var(--accent-soft);border-color:var(--accent)}
+.dia.entrega{box-shadow:inset 0 -4px 0 var(--c)}
+.dia .bandera{position:absolute;top:1px;right:3px;font-size:10px}
+.dia .puntos{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;max-width:100%}
+.dia .puntos .punto{width:6px;height:6px}
+.leyenda{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:12px;font-size:13px}
+.leyenda span{display:flex;align-items:center;gap:6px;cursor:pointer}
+.seccion-dia{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;margin:16px 0 6px}
+.seccion-dia:first-of-type{margin-top:4px}
+.item-dia,.titulo-grupo{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0}
+.titulo-grupo{font-weight:600;margin-top:6px}
+.previsto{display:flex;gap:8px;padding:6px 0 6px 17px;font-size:14px;border-bottom:1px solid var(--line)}
+.previsto:last-child{border-bottom:0}
+.previsto .txt{flex:1;min-width:0}
+/* Temporizador de concentración */
+.fondo.centro{align-items:center;padding:16px;z-index:20}
+.panel-foco{background:var(--card);width:100%;max-width:440px;border-radius:20px;padding:18px 20px 20px;text-align:center;max-height:94vh;overflow:auto}
+.foco-cab{display:flex;align-items:center;gap:8px;text-align:left}
+.foco-cab .nombre{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.foco-accion{font-family:Fraunces,serif;font-size:21px;margin:14px 0 6px}
+.reloj{position:relative;width:220px;max-width:66vw;aspect-ratio:1;margin:16px auto 8px}
+.reloj svg{width:100%;height:100%;transform:rotate(-90deg)}
+.reloj circle{fill:none;stroke-width:8}
+.reloj .pista{stroke:var(--line)}
+.reloj .aro{stroke:var(--accent);stroke-linecap:round;stroke-dasharray:326.73;stroke-dashoffset:326.73;transition:stroke-dashoffset .4s linear}
+.reloj.extra .aro{stroke:var(--p2)}
+.reloj-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#focoTiempo{font-size:46px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.1}
+.reloj.pausa #focoTiempo{color:var(--muted)}
+.foco-aviso{min-height:20px;font-size:14px;color:var(--p2);margin-bottom:12px}
+.barra-foco{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;width:calc(100% - 24px);max-width:796px;background:var(--ink);color:var(--bg);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;z-index:15;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+.barra-foco .nombre{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.barra-foco .num{font-weight:600;font-variant-numeric:tabular-nums}
+.barra-foco button.mini{color:var(--bg);border-color:rgba(127,127,127,.5)}
 </style>
 </head>
 <body>
@@ -97,17 +162,17 @@ button:disabled{opacity:.5;cursor:wait}
   <section id="vistaNuevo" class="hidden">
     <div class="card">
       <h2>Añadir trabajo</h2>
-      <label for="archivo">Archivo del trabajo (PDF, Word, TXT)</label>
-      <input type="file" id="archivo" accept=".pdf,.docx,.txt,.md">
+      <label>Documentos del trabajo</label>
+      <div id="docsForm" class="docs"></div>
+      <button class="ghost" id="btnAddDocs" style="width:100%">📎 Añadir documentos</button>
+      <div class="muted" style="margin-top:6px">Puedes añadir varios (PDF, Word o TXT): el enunciado, la rúbrica, apuntes, lecturas… Marca cada uno como <b>Enunciado</b> o <b>Fuente</b> y quita con ✕ los que sobren.</div>
       <label for="texto">…o pega el enunciado</label>
-      <textarea id="texto" placeholder="Opcional si subes archivo"></textarea>
+      <textarea id="texto" placeholder="Opcional si subes el enunciado como documento"></textarea>
       <label for="fecha">Fecha de entrega</label>
       <input type="date" id="fecha">
-      <label for="fuentesForm">Fuentes de apoyo (opcional)</label>
-      <input type="file" id="fuentesForm" accept=".pdf,.docx,.txt,.md" multiple>
-      <div class="muted">Apuntes, lecturas, la rúbrica… La IA las usará para guiarte mejor.</div>
-      <label for="notas">Notas (opcional)</label>
-      <textarea id="notas" placeholder="Ej.: es en grupo, el profesor pide formato APA…"></textarea>
+      <label for="instruccionesForm">Instrucciones para la IA (opcional)</label>
+      <textarea id="instruccionesForm" placeholder="Ej.: es en grupo; el profesor pide formato APA; céntrate en el tema 3; quiero pasos de 10 minutos…"></textarea>
+      <div class="muted">La IA adaptará las micro metas a estas instrucciones y a los documentos. 🔒 Solo se usan en este trabajo.</div>
       <div class="row" style="margin-top:14px">
         <button class="ghost" id="btnCancelar">Cancelar</button>
         <button id="btnAnalizar">Analizar con IA</button>
@@ -123,12 +188,15 @@ button:disabled{opacity:.5;cursor:wait}
         <div class="muted">Horas que puedes dedicar al día</div>
         <input type="number" id="horasDia" min="0.5" step="0.5" style="max-width:100px">
       </div>
+      <details id="ritmo" class="ritmo"></details>
     </div>
     <div class="tabs">
       <button id="tabHoy" class="on">📅 Hoy</button>
+      <button id="tabCal">🗓️ Calendario</button>
       <button id="tabTrabajos">📚 Trabajos</button>
     </div>
     <div id="hoy"></div>
+    <div id="calendario" class="hidden"></div>
     <div id="lista" class="hidden"></div>
   </section>
 
@@ -155,58 +223,166 @@ button:disabled{opacity:.5;cursor:wait}
   </div>
 </div>
 
-<input type="file" id="fuentesExtra" accept=".pdf,.docx,.txt,.md" multiple class="hidden">
+<!-- Temporizador de concentración -->
+<div id="fondoFoco" class="fondo centro hidden">
+  <div class="panel-foco" role="dialog" aria-label="Temporizador de concentración">
+    <div class="foco-cab">
+      <span class="punto" id="focoColor"></span>
+      <span class="muted nombre" id="focoTrabajo"></span>
+      <button class="mini" id="btnMinFoco">Minimizar ▾</button>
+    </div>
+    <div class="foco-accion" id="focoAccion"></div>
+    <div class="muted" id="focoDetalle"></div>
+    <div class="reloj" id="focoReloj">
+      <svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" class="pista"/><circle cx="60" cy="60" r="52" class="aro" id="focoAro"/></svg>
+      <div class="reloj-txt"><div id="focoTiempo">0:00</div><div class="muted" id="focoMeta"></div></div>
+    </div>
+    <div class="foco-aviso" id="focoAviso"></div>
+    <div class="row">
+      <button class="ghost" id="btnPausa">⏸️ Pausar</button>
+      <button id="btnTerminado">✓ Terminado</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="mini" id="btnDudaFoco">❓ Tengo una duda</button>
+      <button class="mini" id="btnDetener">■ Parar sin terminar</button>
+    </div>
+  </div>
+</div>
+<div id="barraFoco" class="barra-foco hidden">
+  <span id="barraIco">⏱</span><span class="num" id="barraTiempo"></span><span class="nombre" id="barraAccion"></span>
+  <button class="mini" id="btnBarraPausa" aria-label="Pausar o seguir">⏸️</button>
+</div>
+
+<input type="file" id="inputDocs" accept=".pdf,.docx,.txt,.md" multiple class="hidden">
+<input type="file" id="inputDocsDet" accept=".pdf,.docx,.txt,.md" multiple class="hidden">
 
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 const $ = (id) => document.getElementById(id);
+const uuid = () => (window.crypto?.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
 const CLAVE = "trabajos-v1";
-const MAX_FUENTE = 20000;       // caracteres guardados por fuente
-const MAX_ENUNCIADO = 30000;
-let trabajos = cargar();
-let horasDia = Number(localStorage.getItem("horasDia")) || 3;
-$("horasDia").value = horasDia;
+const CLAVE_RITMO = "ritmo-v1";
+const CLAVE_SESION = "temporizador-v1";
+const MAX_DOC = 25000;            // caracteres guardados por documento
+const MAX_ENUNCIADO_IA = 30000;   // caracteres de enunciado que se mandan a la IA (en total)
+const MAX_FUENTES_IA = 40000;     // caracteres de fuentes que se mandan a la IA (en total)
+const TIPOS = {
+  lectura:       { ico: "📖", nombre: "Lectura" },
+  investigacion: { ico: "🔎", nombre: "Investigación" },
+  organizacion:  { ico: "🗂️", nombre: "Organización" },
+  escritura:     { ico: "✍️", nombre: "Escritura" },
+  calculo:       { ico: "🧮", nombre: "Cálculo" },
+  programacion:  { ico: "💻", nombre: "Programación" },
+  diseno:        { ico: "🎨", nombre: "Diseño" },
+  revision:      { ico: "🔁", nombre: "Revisión" },
+  entrega:       { ico: "📤", nombre: "Entrega" },
+  otro:          { ico: "•",  nombre: "Otros" },
+};
+const COLORES = ["#2f7d6b", "#c2412d", "#3d6fb6", "#d98a1c", "#8a4fb3", "#4f8f3a", "#c24f86", "#5b7a8a"];
+const ICONO_ROL = { enunciado: "📄", fuente: "📚" };
 
+let trabajos = [];
+let registros = [];   // aprendizaje del ritmo: solo números, nunca contenido
+let sesion = null;    // temporizador en marcha
+let horasDia = Number(localStorage.getItem("horasDia")) || 3;
+
+// ---------- Guardado y migración de datos antiguos ----------
 function cargar(){
-  try {
-    const t = JSON.parse(localStorage.getItem(CLAVE)) || [];
-    t.forEach(x => { x.fuentes = x.fuentes || []; });
-    return t;
-  } catch { return []; }
+  let lista = [];
+  try { lista = JSON.parse(localStorage.getItem(CLAVE)) || []; } catch {}
+  if (!Array.isArray(lista)) lista = [];
+  const usados = new Set(lista.map(t => t.color).filter(Boolean));
+  let cambios = false;
+  lista.forEach(t => { if (migrar(t, usados)) cambios = true; });
+  return { lista, cambios };
+}
+// Versión anterior: un solo enunciado (contenido) + fuentes + notas. Ahora: documentos con rol + instrucciones.
+function migrar(t, usados){
+  let c = false;
+  if (!Array.isArray(t.docs)){
+    t.docs = [];
+    if (t.contenido) t.docs.push({ id: uuid(), nombre: t.archivo || "Enunciado", rol: "enunciado", texto: String(t.contenido) });
+    (t.fuentes || []).forEach(f => t.docs.push({ id: f.id || uuid(), nombre: f.nombre || "Fuente", rol: "fuente", texto: String(f.texto || "") }));
+    delete t.contenido; delete t.fuentes; delete t.archivo;
+    c = true;
+  }
+  if (typeof t.instrucciones !== "string"){ t.instrucciones = t.notas || ""; delete t.notas; c = true; }
+  if (!Array.isArray(t.pasos)){ t.pasos = []; c = true; }
+  if (!Array.isArray(t.fases)){ t.fases = []; c = true; }
+  t.pasos.forEach(p => {
+    if (!p.id){ p.id = uuid(); c = true; }
+    if (!TIPOS[p.tipo]){ p.tipo = "otro"; c = true; }
+    if (!Array.isArray(p.chat)){ p.chat = []; c = true; }
+  });
+  if (!t.color){ t.color = COLORES.find(x => !usados.has(x)) || COLORES[usados.size % COLORES.length]; usados.add(t.color); c = true; }
+  if (t.firmaIA === undefined){ t.firmaIA = firmaContexto(t); c = true; }
+  return c;
 }
 function guardar(){
   try { localStorage.setItem(CLAVE, JSON.stringify(trabajos)); return true; }
   catch {
-    aviso("No queda espacio en el navegador. Borra alguna fuente o trabajo.");
+    aviso("No queda espacio en el navegador. Quita algún documento o trabajo.");
     return false;
   }
 }
+let temporizadorGuardado = null;
+function guardarPronto(){ clearTimeout(temporizadorGuardado); temporizadorGuardado = setTimeout(guardar, 400); }
+window.addEventListener("pagehide", () => { if (temporizadorGuardado){ clearTimeout(temporizadorGuardado); guardar(); } });
+
 function aviso(txt){
+  document.querySelectorAll(".toast").forEach(x => x.remove());
   const d = document.createElement("div");
   d.className = "toast"; d.textContent = txt;
   document.body.appendChild(d);
   setTimeout(() => d.remove(), 3500);
 }
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const porId = (id) => trabajos.find(x => x.id === id);
+const corto = (s, n) => { s = String(s || ""); return s.length > n ? s.slice(0, n - 1) + "…" : s; };
+const miles = (n) => Number(n).toLocaleString("es-ES");
+function colorLibre(){
+  const usados = new Set(trabajos.map(t => t.color));
+  return COLORES.find(c => !usados.has(c)) || COLORES[trabajos.length % COLORES.length];
+}
+
+// ---------- Fechas ----------
+const isoDe = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const hoyISO = () => isoDe(new Date());
+const diasEntre = (a, b) => Math.round((new Date(b + "T00:00:00") - new Date(a + "T00:00:00")) / 86400000);
+const diasRestantes = (fecha) => diasEntre(hoyISO(), fecha);
+function sumarDias(iso, n){ const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + n); return isoDe(d); }
+const fechaLarga = (iso) => new Date(iso + "T00:00:00").toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
+const fechaCorta = (iso) => new Date(iso + "T00:00:00").toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+const fmt = (m) => { m = Math.max(0, Math.round(m)); const h = Math.floor(m/60), r = m % 60; return h ? `${h} h${r ? " " + r + " min" : ""}` : `${r} min`; };
+const reloj = (ms) => { const s = Math.floor(ms/1000), h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s % 60;
+  return (h ? h + ":" + String(m).padStart(2,"0") : m) + ":" + String(x).padStart(2,"0"); };
 
 // ---------- Navegación ----------
+let pestana = "hoy";
 function mostrar(vista){
   ["vistaNuevo","vistaLista","vistaDetalle"].forEach(v => $(v).classList.toggle("hidden", v !== vista));
   $("btnNuevo").classList.toggle("hidden", vista !== "vistaLista");
   window.scrollTo(0,0);
 }
-$("btnNuevo").onclick = () => { $("errorForm").textContent=""; mostrar("vistaNuevo"); };
+$("btnNuevo").onclick = () => { $("errorForm").textContent = ""; pintarDocsForm(); mostrar("vistaNuevo"); };
 $("btnCancelar").onclick = () => mostrar("vistaLista");
 $("btnVolver").onclick = () => { pintarLista(); mostrar("vistaLista"); };
 $("tabHoy").onclick = () => { pestana = "hoy"; pintarLista(); };
+$("tabCal").onclick = () => { pestana = "calendario"; pintarLista(); };
 $("tabTrabajos").onclick = () => { pestana = "trabajos"; pintarLista(); };
-$("horasDia").onchange = (e) => { horasDia = Math.max(0.5, Number(e.target.value)||3); localStorage.setItem("horasDia", horasDia); repintar(); };
+$("horasDia").onchange = (e) => {
+  const nuevo = Math.max(0.5, Number(e.target.value) || 3);
+  e.target.value = nuevo;
+  if (nuevo === horasDia) return;   // sin cambios: no repintar (si no, se pierde el toque que quitó el foco)
+  horasDia = nuevo; localStorage.setItem("horasDia", horasDia); repintar();
+};
 
 // ---------- Lectura de archivos ----------
 async function leerArchivo(file){
   const ext = file.name.split(".").pop().toLowerCase();
   if (ext === "pdf"){
+    if (!window.pdfjsLib) throw new Error("No se pudo cargar el lector de PDF");
     const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
     let txt = "";
     for (let i = 1; i <= pdf.numPages; i++){
@@ -217,21 +393,93 @@ async function leerArchivo(file){
     return txt;
   }
   if (ext === "docx"){
+    if (!window.mammoth) throw new Error("No se pudo cargar el lector de Word");
     const r = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
     return r.value;
   }
   return await file.text();
 }
-async function leerFuentes(files){
-  const res = [];
-  for (const f of files){
-    const texto = (await leerArchivo(f)).trim();
-    if (texto.length < 20) { aviso(`No pude leer texto de «${f.name}»`); continue; }
-    res.push({ id: crypto.randomUUID(), nombre: f.name, texto: texto.slice(0, MAX_FUENTE) });
-  }
-  return res;
+async function leerTexto(file){
+  const txt = (await leerArchivo(file)).trim();
+  if (txt.length < 20) throw new Error("sin texto");
+  return txt.slice(0, MAX_DOC);
 }
-const fuentesParaIA = (t) => t.fuentes.map(f => ({ nombre: f.nombre, texto: f.texto }));
+// Primer documento → enunciado; los siguientes → fuente (se puede cambiar en la lista).
+function rolInicial(nombre, hayEnunciado){
+  if (/enunciad|consigna|instrucci|pr[aá]ctica|actividad/i.test(nombre)) return "enunciado";
+  return hayEnunciado ? "fuente" : "enunciado";
+}
+function filaDoc(d, ctx){
+  const estado = d.estado === "leyendo" ? `<span class="spinner"></span>Leyendo…`
+    : d.estado === "error" ? "⚠️ No se pudo leer texto (¿PDF escaneado?). No se usará."
+    : `${miles(d.texto.length)} caracteres`;
+  return `<div class="doc ${d.estado === "error" ? "mal" : ""}">
+      <span class="ico">${ICONO_ROL[d.rol] || "📄"}</span>
+      <div class="info"><div class="nombre">${esc(d.nombre)}</div><div class="muted">${estado}</div></div>
+      ${d.estado === "error" ? "" : `<select data-${ctx}-rol="${d.id}" aria-label="Tipo de documento">
+        <option value="enunciado" ${d.rol === "enunciado" ? "selected" : ""}>Enunciado</option>
+        <option value="fuente" ${d.rol === "fuente" ? "selected" : ""}>Fuente</option>
+      </select>`}
+      <button class="mini" data-${ctx}-quitar="${d.id}" aria-label="Quitar ${esc(d.nombre)}">✕</button>
+    </div>`;
+}
+
+// ---------- Selector de documentos del formulario ----------
+let docsForm = [];
+function pintarDocsForm(){
+  $("docsForm").innerHTML = docsForm.length ? docsForm.map(d => filaDoc(d, "form")).join("")
+    : `<div class="docs-vacio">Aún no has añadido documentos</div>`;
+  $("btnAddDocs").textContent = docsForm.length ? "📎 Añadir más documentos" : "📎 Añadir documentos";
+}
+$("btnAddDocs").onclick = () => $("inputDocs").click();
+$("inputDocs").onchange = (e) => {
+  const files = [...e.target.files];
+  e.target.value = "";
+  for (const f of files){
+    if (docsForm.some(d => d.nombre === f.name && d.tam === f.size)){ aviso(`«${f.name}» ya está en la lista`); continue; }
+    const hayEnunciado = docsForm.some(d => d.rol === "enunciado") || !!$("texto").value.trim();
+    const d = { id: uuid(), nombre: f.name, tam: f.size, rol: rolInicial(f.name, hayEnunciado), estado: "leyendo", texto: "" };
+    d.promesa = leerTexto(f).then(txt => { d.texto = txt; d.estado = "ok"; }, () => { d.estado = "error"; }).finally(pintarDocsForm);
+    docsForm.push(d);
+  }
+  pintarDocsForm();
+};
+$("docsForm").addEventListener("change", (e) => {
+  const d = docsForm.find(x => x.id === e.target.dataset.formRol);
+  if (d){ d.rol = e.target.value; pintarDocsForm(); }
+});
+$("docsForm").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-form-quitar]");
+  if (!b) return;
+  docsForm = docsForm.filter(x => x.id !== b.dataset.formQuitar);
+  pintarDocsForm();
+});
+function limpiarForm(){
+  docsForm = [];
+  ["texto","fecha","instruccionesForm"].forEach(id => $(id).value = "");
+  pintarDocsForm();
+}
+
+// ---------- Aislamiento: lo que ve la IA sale SOLO de este trabajo ----------
+function recortarDocs(docs, max){
+  const cupo = [];
+  let restante = max, quedan = docs.length;
+  docs.map((d, i) => ({ i, n: d.texto.length })).sort((a, b) => a.n - b.n).forEach(x => {
+    cupo[x.i] = Math.min(x.n, Math.floor(restante / quedan)); restante -= cupo[x.i]; quedan--;
+  });
+  return docs.map((d, i) => ({ nombre: d.nombre, texto: d.texto.slice(0, cupo[i]) }));
+}
+function contextoIA(t){
+  const de = (rol) => t.docs.filter(d => d.rol === rol);
+  return {
+    enunciados: recortarDocs(de("enunciado"), MAX_ENUNCIADO_IA),
+    fuentes: recortarDocs(de("fuente"), MAX_FUENTES_IA),
+    instrucciones: (t.instrucciones || "").trim().slice(0, 4000),
+  };
+}
+// Si cambian las instrucciones o los documentos, la guía se puede adaptar.
+function firmaContexto(t){ return (t.instrucciones || "").trim() + "§" + (t.docs || []).map(d => d.id + ":" + d.rol).join(","); }
+const hayCambios = (t) => t.firmaIA !== firmaContexto(t);
 
 // ---------- Llamadas a la IA ----------
 // Llamada en directo: la IA va enviando el texto poco a poco.
@@ -270,7 +518,7 @@ function extraerJSON(texto){
   try { return JSON.parse(texto.slice(ini, fin + 1)); }
   catch { throw new Error("La respuesta de la IA llegó incompleta. Inténtalo de nuevo."); }
 }
-// Analiza el trabajo mostrando el progreso en el botón.
+// Analiza (o adapta) un trabajo mostrando el progreso en el botón.
 async function analizarEnDirecto(datos, btn, textoBase){
   const texto = await llamarEnDirecto("/api/analizar", datos, (txt, estado) => {
     const pasos = (txt.match(/"accion"\s*:/g) || []).length;
@@ -278,18 +526,43 @@ async function analizarEnDirecto(datos, btn, textoBase){
     btn.innerHTML = `<span class="spinner"></span>${esc(msg)}`;
   });
   const data = extraerJSON(texto);
-  data.horasEstimadas = Math.max(0.5, Number(data.horasEstimadas) || 2);
+  data.horasEstimadas = Math.max(0.25, Number(data.horasEstimadas) || 2);
   data.dificultad = Math.min(5, Math.max(1, Math.round(Number(data.dificultad) || 3)));
-  data.fases = Array.isArray(data.fases) ? data.fases : [];
+  data.fases = (Array.isArray(data.fases) ? data.fases : []).filter(f => Array.isArray(f?.pasos) && f.pasos.length);
+  if (!data.fases.length) throw new Error("La IA no devolvió micro metas. Inténtalo de nuevo.");
   return data;
 }
-function aplicarAnalisis(t, data){
-  const pasos = [];
-  (data.fases || []).forEach((f, fi) => (f.pasos || []).forEach(p => pasos.push({ ...p, fase: fi, hecho: false, chat: [] })));
+// "fuente" solo puede señalar documentos de ESTE trabajo.
+function nombreDoc(t, nombre){
+  const n = String(nombre || "").trim().toLowerCase();
+  if (!n) return "";
+  const d = t.docs.find(x => x.nombre.toLowerCase() === n) || t.docs.find(x => x.nombre.toLowerCase().includes(n) || n.includes(x.nombre.toLowerCase()));
+  return d ? d.nombre : "";
+}
+// Convierte la respuesta de la IA en micro metas. Los minutos se escalan para sumar las horas estimadas.
+function aplicarAnalisis(t, data, { conservados = [], adaptar = false } = {}){
+  const fases = [], pasos = [];
+  if (conservados.length){ fases.push("✓ Ya hecho"); conservados.forEach(p => pasos.push({ ...p, fase: 0 })); }
+  const base = fases.length, nuevos = [];
+  data.fases.forEach((f, fi) => {
+    fases.push(String(f.nombre || `Fase ${fi + 1}`));
+    f.pasos.forEach(p => nuevos.push({ p, fase: base + fi }));
+  });
+  const minIA = (p) => Math.min(90, Math.max(2, Number(p.minutos) || 10));
+  const suma = nuevos.reduce((s, x) => s + minIA(x.p), 0);
+  const escala = suma ? data.horasEstimadas * 60 / suma : 1;
+  nuevos.forEach(({ p, fase }) => pasos.push({
+    id: uuid(), accion: String(p.accion || "").trim() || "Siguiente paso", detalle: String(p.detalle || "").trim(),
+    minutos: Math.round(minIA(p) * escala * 10) / 10, tipo: TIPOS[p.tipo] ? p.tipo : "otro",
+    fuente: nombreDoc(t, p.fuente), fase, hecho: false, chat: []
+  }));
   Object.assign(t, {
-    titulo: data.titulo, asignatura: data.asignatura, resumen: data.resumen,
-    horasEstimadas: data.horasEstimadas, dificultad: data.dificultad, justificacion: data.justificacion,
-    fases: (data.fases || []).map(f => f.nombre), pasos, version: Date.now()
+    titulo: (adaptar && t.titulo) || String(data.titulo || "Trabajo"),
+    asignatura: (adaptar && t.asignatura) || String(data.asignatura || "Sin especificar"),
+    resumen: String(data.resumen || t.resumen || ""), dificultad: data.dificultad,
+    justificacion: String(data.justificacion || ""), fases, pasos,
+    horasEstimadas: pasos.reduce((s, p) => s + p.minutos, 0) / 60,
+    version: Date.now(), firmaIA: firmaContexto(t)
   });
 }
 
@@ -297,31 +570,24 @@ function aplicarAnalisis(t, data){
 $("btnAnalizar").onclick = async () => {
   const btn = $("btnAnalizar"), err = $("errorForm");
   err.textContent = "";
-  const file = $("archivo").files[0];
   const fecha = $("fecha").value;
   if (!fecha) return err.textContent = "Pon la fecha de entrega.";
-  if (!file && !$("texto").value.trim()) return err.textContent = "Sube un archivo o pega el enunciado.";
-
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Analizando…';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Leyendo documentos…';
   try {
-    let contenido = $("texto").value.trim();
-    if (file) contenido = (await leerArchivo(file)) + (contenido ? "\n\n" + contenido : "");
-    if (contenido.trim().length < 20) throw new Error("No he podido leer texto del archivo (¿es un PDF escaneado?). Pega el enunciado a mano.");
-    contenido = contenido.slice(0, MAX_ENUNCIADO);
-    const fuentes = await leerFuentes($("fuentesForm").files);
-    const notas = $("notas").value;
-
-    const data = await analizarEnDirecto({
-      contenido, fechaEntrega: fecha, nombreArchivo: file?.name, notas,
-      fuentes: fuentes.map(f => ({ nombre: f.nombre, texto: f.texto }))
-    }, btn, "Creando guía");
-
-    const t = { id: crypto.randomUUID(), creado: Date.now(), fechaEntrega: fecha,
-                archivo: file?.name || "Texto pegado", contenido, notas, fuentes };
+    await Promise.all(docsForm.map(d => d.promesa));
+    const pegado = $("texto").value.trim();
+    const docs = docsForm.filter(d => d.estado === "ok").map(d => ({ id: d.id, nombre: d.nombre, rol: d.rol, texto: d.texto }));
+    if (pegado) docs.unshift({ id: uuid(), nombre: "Enunciado pegado", rol: "enunciado", texto: pegado.slice(0, MAX_DOC) });
+    if (!docs.length) throw new Error("Añade al menos un documento o pega el enunciado.");
+    if (!docs.some(d => d.rol === "enunciado")) throw new Error("Marca al menos un documento como «Enunciado» (o pega el enunciado).");
+    const t = { id: uuid(), creado: Date.now(), fechaEntrega: fecha, docs, instrucciones: $("instruccionesForm").value.trim(),
+                color: colorLibre(), pasos: [], fases: [] };
+    btn.innerHTML = '<span class="spinner"></span>Analizando…';
+    const data = await analizarEnDirecto({ fechaEntrega: fecha, ...contextoIA(t), ritmo: ritmoParaIA(), modo: "nuevo" }, btn, "Creando guía");
     aplicarAnalisis(t, data);
     trabajos.push(t);
-    if (!guardar()) { trabajos.pop(); throw new Error("No hay espacio para guardar. Prueba con menos fuentes."); }
-    ["archivo","texto","fecha","notas","fuentesForm"].forEach(id => $(id).value = "");
+    if (!guardar()){ trabajos.pop(); throw new Error("No hay espacio para guardar. Prueba con menos documentos."); }
+    limpiarForm();
     pintarLista(); mostrar("vistaLista");
   } catch (e){
     err.textContent = e.message;
@@ -330,23 +596,86 @@ $("btnAnalizar").onclick = async () => {
   }
 };
 
+// ---------- Tiempos: estimación de la IA ajustada a tu ritmo ----------
+function factor(t){ const total = t.pasos.reduce((s,p) => s + (p.minutos||10), 0); return total ? t.horasEstimadas*60/total : 1; }
+const minBase = (t, p) => (p.minutos||10) * factor(t);            // estudiante medio
+const minPaso = (t, p) => minBase(t, p) * factorRitmo(p.tipo);    // tú
+const minPendientes = (t) => t.pasos.filter(p => !p.hecho).reduce((s,p) => s + minPaso(t, p), 0);
+const minTotales = (t) => t.pasos.reduce((s,p) => s + minPaso(t, p), 0);
+const horasPendientes = (t) => minPendientes(t) / 60;
+
+// ---------- Aprendizaje del ritmo (temporizador) ----------
+function cargarRitmo(){ try { const r = JSON.parse(localStorage.getItem(CLAVE_RITMO)); return Array.isArray(r) ? r : []; } catch { return []; } }
+function guardarRitmo(){ try { localStorage.setItem(CLAVE_RITMO, JSON.stringify(registros)); } catch {} ritmoCache = null; }
+let ritmoCache = null;
+// Media geométrica de "tiempo real ÷ estimado", prudente cuando hay pocos datos.
+function ritmo(){
+  if (ritmoCache) return ritmoCache;
+  const logs = registros.slice(-150).map(r => ({ tipo: r.tipo, l: Math.log(Math.min(4, Math.max(0.25, r.real / r.base))) }));
+  const n = logs.length;
+  const lg = logs.reduce((s, x) => s + x.l, 0) / (n + 2);
+  const tipos = {};
+  logs.forEach(x => { (tipos[x.tipo] ||= { s: 0, n: 0 }); tipos[x.tipo].s += x.l; tipos[x.tipo].n++; });
+  Object.values(tipos).forEach(v => { v.r = Math.exp((v.s + 3 * lg) / (v.n + 3)); });
+  return ritmoCache = { n, global: Math.exp(lg), tipos };
+}
+function factorRitmo(tipo){
+  const r = ritmo();
+  if (!r.n) return 1;
+  return Math.min(3, Math.max(0.4, r.tipos[tipo]?.r ?? r.global));
+}
+function registrarRitmo(t, p){
+  quitarRegistro(p.id);
+  const real = (p.segundos || 0) / 60, base = minBase(t, p);
+  if (real < 1 || !base) return;
+  if (real / base < 0.2) return;   // seguramente lo hizo casi todo sin el temporizador
+  registros.push({ pid: p.id, tipo: p.tipo || "otro", base: Math.round(base * 10) / 10,
+                   real: Math.round(Math.min(real, base * 4) * 10) / 10, f: hoyISO() });
+  if (registros.length > 300) registros = registros.slice(-300);
+  guardarRitmo();
+}
+function quitarRegistro(pid){
+  const antes = registros.length;
+  registros = registros.filter(r => r.pid !== pid);
+  if (registros.length !== antes) guardarRitmo();
+}
+function ritmoParaIA(){
+  const r = ritmo();
+  if (!r.n) return null;
+  const tipos = {};
+  Object.entries(r.tipos).forEach(([k, v]) => { if (v.n >= 2) tipos[k] = Math.round(v.r * 100) / 100; });
+  return { global: Math.round(r.global * 100) / 100, medidos: r.n, tipos };
+}
+function pintarRitmo(){
+  const caja = $("ritmo"), abierto = caja.open, r = ritmo();
+  if (!r.n){
+    caja.innerHTML = `<summary>⏱ Tu ritmo: aún sin medir</summary>
+      <div class="muted" style="margin-top:6px">Pulsa ▶ en una micro meta para medir cuánto tardas de verdad. Con cada paso terminado, la app ajusta los tiempos a tu ritmo y la IA lo tiene en cuenta al crear o adaptar micro metas.</div>`;
+  } else {
+    const pct = Math.round((r.global - 1) * 100);
+    const frase = Math.abs(pct) < 5 ? "vas al ritmo estimado" : pct > 0 ? `tardas un ${pct}% más de lo estimado` : `vas un ${-pct}% más rápido de lo estimado`;
+    caja.innerHTML = `<summary>⏱ Tu ritmo: ${frase} · ${r.n} paso${r.n > 1 ? "s" : ""} medido${r.n > 1 ? "s" : ""}</summary>
+      <div class="chips">${Object.entries(r.tipos).sort((a, b) => b[1].n - a[1].n).map(([k, v]) =>
+        `<span class="chip">${TIPOS[k]?.ico || "•"} ${TIPOS[k]?.nombre || k} ×${v.r.toFixed(2).replace(".", ",")} (${v.n})</span>`).join("")}</div>
+      <div class="muted">×1,50 = tardas un 50% más que lo que estima la IA. Los tiempos de los pasos ya se muestran ajustados a tu ritmo, y la IA lo usa para dimensionar las micro metas. Solo se guardan números, nunca el contenido de tus trabajos.</div>
+      <button class="mini" id="btnBorrarRitmo">Reiniciar aprendizaje</button>`;
+    $("btnBorrarRitmo").onclick = () => {
+      if (!confirm("¿Borrar lo que la app ha aprendido de tu ritmo?")) return;
+      registros = []; guardarRitmo(); repintar();
+    };
+  }
+  caja.open = abierto;
+}
+
 // ---------- Prioridad ----------
-function diasRestantes(fecha){
-  const hoy = new Date(); hoy.setHours(0,0,0,0);
-  return Math.round((new Date(fecha + "T00:00:00") - hoy) / 86400000);
-}
-function horasPendientes(t){
-  const total = t.pasos.reduce((s,p) => s + (p.minutos||10), 0);
-  const pend = t.pasos.filter(p => !p.hecho).reduce((s,p) => s + (p.minutos||10), 0);
-  return total ? t.horasEstimadas * pend / total : t.horasEstimadas;
-}
-function prioridad(t){
-  const dias = Math.max(diasRestantes(t.fechaEntrega), 0.5);
-  const presion = horasPendientes(t) / (dias * horasDia);
+function prioridadCon(t, horas, dias){
+  dias = Math.max(dias, 0.5);
+  const presion = horas / (dias * horasDia);
   const urgencia = 10 / (dias + 1);
-  const carga = t.dificultad / 5;
+  const carga = (t.dificultad || 3) / 5;
   return presion * 6 + urgencia * 2 + carga * 2;
 }
+const prioridad = (t) => prioridadCon(t, horasPendientes(t), diasRestantes(t.fechaEntrega));
 function etiqueta(score){
   if (score >= 6) return ["Urgente","var(--p1)"];
   if (score >= 3.5) return ["Alta","var(--p2)"];
@@ -358,71 +687,105 @@ const textoDias = (d) => d < 0 ? `Vencido hace ${-d} d` : d === 0 ? "Entrega hoy
 
 // ---------- Borrar / completar ----------
 function borrarTrabajo(id){
-  trabajos = trabajos.filter(x => x.id !== id);   // se van también sus fuentes y chats
+  if (sesion?.tid === id){ sesion = null; guardarSesion(); cerrarFoco(); }
+  trabajos = trabajos.filter(x => x.id !== id);   // se van también sus documentos, instrucciones y chats
   guardar();
 }
 function completarTrabajo(t){
   borrarTrabajo(t.id);
   pintarLista(); mostrar("vistaLista");
-  aviso("🎉 ¡Trabajo terminado! Se ha eliminado junto con sus fuentes.");
+  aviso("🎉 ¡Trabajo terminado! Se ha eliminado junto con sus documentos.");
 }
 function marcarPaso(t, i, valor){
-  t.pasos[i].hecho = valor;
-  if (valor && t.pasos.every(p => p.hecho)){
-    if (confirm("¿Has terminado el trabajo? Se eliminará junto con todas sus fuentes.")) return completarTrabajo(t);
-    t.pasos[i].hecho = false;
+  const p = t?.pasos[i];
+  if (!p) return;
+  if (sesion?.pid === p.id) detenerSesion();   // guarda el tiempo medido en el paso
+  p.hecho = valor;
+  if (valor){ p.hechoEn = hoyISO(); registrarRitmo(t, p); }
+  else { delete p.hechoEn; quitarRegistro(p.id); }
+  if (valor && t.pasos.every(x => x.hecho)){
+    if (confirm("¿Has terminado el trabajo? Se eliminará junto con todos sus documentos.")) return completarTrabajo(t);
+    p.hecho = false; delete p.hechoEn; quitarRegistro(p.id);
   }
   guardar(); repintar();
 }
 
 // ---------- Pantalla principal (pestañas) ----------
-let pestana = "hoy";
 function pintarLista(){
-  $("tabHoy").classList.toggle("on", pestana === "hoy");
-  $("tabTrabajos").classList.toggle("on", pestana !== "hoy");
+  [["tabHoy","hoy"],["tabCal","calendario"],["tabTrabajos","trabajos"]].forEach(([b, p]) => $(b).classList.toggle("on", pestana === p));
   $("hoy").classList.toggle("hidden", pestana !== "hoy");
-  $("lista").classList.toggle("hidden", pestana === "hoy");
-  if (pestana === "hoy") pintarHoy(); else pintarTrabajos();
+  $("calendario").classList.toggle("hidden", pestana !== "calendario");
+  $("lista").classList.toggle("hidden", pestana !== "trabajos");
+  pintarRitmo();
+  if (pestana === "hoy") pintarHoy();
+  else if (pestana === "calendario") pintarCalendario();
+  else pintarTrabajos();
 }
 function repintar(){
-  if (!$("vistaDetalle").classList.contains("hidden")) pintarDetalle(); else pintarLista();
+  if (!$("vistaDetalle").classList.contains("hidden")) pintarDetalle();
+  else if (!$("vistaLista").classList.contains("hidden")) pintarLista();
+  tick();
 }
 
-// ---------- Plan de hoy ----------
-const hoyISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
-const fmt = (m) => { m = Math.round(m); const h = Math.floor(m/60), r = m % 60; return h ? `${h} h${r ? " " + r + " min" : ""}` : `${r} min`; };
-// Los minutos de los pasos se escalan para que sumen las horas estimadas por la IA
-function factor(t){ const total = t.pasos.reduce((s,p) => s + (p.minutos||10), 0); return total ? t.horasEstimadas*60/total : 1; }
-const minPaso = (t, p) => (p.minutos||10) * factor(t);
-const firma = () => trabajos.map(t => t.id + ":" + (t.version||0)).sort().join("|");
+// Fila de una micro meta (con casilla, ▶ temporizador y ❓ dudas)
+function filaPaso(t, i, actual){
+  const p = t.pasos[i], enMarcha = sesion?.pid === p.id;
+  const medido = (p.segundos || 0) >= 60 ? ` · ⏱ ${fmt(p.segundos / 60)} medidos` : "";
+  return `<div class="paso ${p.hecho ? "hecho" : ""} ${actual ? "actual" : ""}">
+      <input type="checkbox" data-t="${t.id}" data-i="${i}" ${p.hecho ? "checked" : ""} aria-label="Hecho">
+      <div class="cuerpo">
+        <div class="accion">${esc(p.accion)}</div>
+        ${p.detalle ? `<div class="detalle">${esc(p.detalle)}</div>` : ""}
+        <div class="meta-paso">${TIPOS[p.tipo]?.ico || "•"} ≈ ${fmt(minPaso(t, p))}${medido}${p.fuente ? ` · 📚 ${esc(p.fuente)}` : ""}</div>
+      </div>
+      <div class="acciones-paso">
+        ${p.hecho ? "" : `<button class="mini ${enMarcha ? "on" : ""}" data-t="${t.id}" data-empezar="${i}" aria-label="${enMarcha ? "Ver temporizador" : "Empezar"}">${enMarcha ? "⏱" : "▶"}</button>`}
+        <button class="mini" data-t="${t.id}" data-duda="${i}" aria-label="Duda">❓${p.chat?.length ? " " + Math.ceil(p.chat.length/2) : ""}</button>
+      </div>
+    </div>`;
+}
+function cablear(cont){
+  cont.querySelectorAll("input[type=checkbox][data-t]").forEach(cb => cb.onchange = () => marcarPaso(porId(cb.dataset.t), Number(cb.dataset.i), cb.checked));
+  cont.querySelectorAll("[data-empezar]").forEach(b => b.onclick = (e) => { e.stopPropagation(); empezar(porId(b.dataset.t), Number(b.dataset.empezar)); });
+  cont.querySelectorAll("[data-duda]").forEach(b => b.onclick = (e) => { e.stopPropagation(); actualId = b.dataset.t; abrirDuda(Number(b.dataset.duda)); });
+  cont.querySelectorAll("[data-abrir]").forEach(h => h.onclick = () => abrir(h.dataset.abrir));
+}
 
-function generarPlan(){
-  const presupuesto = horasDia * 60;
-  const orden = trabajos.filter(t => t.pasos.some(p => !p.hecho)).sort((a,b) => prioridad(b) - prioridad(a));
-  const cola = new Map(orden.map(t => [t.id, t.pasos.map((p,i) => i).filter(i => !t.pasos[i].hecho)]));
-  const elegidos = new Map(orden.map(t => [t.id, []]));
+// ---------- Planificación (hoy y días siguientes) ----------
+const firma = () => trabajos.map(t => t.id + ":" + (t.version||0)).sort().join("|");
+// Reparte las micro metas pendientes de "estado" en un día con "presupuesto" minutos.
+function repartir(estado, fecha, presupuesto){
+  const pendMin = (e) => e.cola.reduce((s, i) => s + minPaso(e.t, e.t.pasos[i]), 0);
+  const dias = (e) => diasEntre(fecha, e.t.fechaEntrega);
+  const orden = estado.filter(e => e.cola.length)
+    .map(e => ({ e, prio: prioridadCon(e.t, pendMin(e) / 60, dias(e)) }))
+    .sort((a, b) => b.prio - a.prio).map(x => x.e);
+  const elegidos = new Map(orden.map(e => [e.t.id, []]));
   let usado = 0, necesario = 0;
-  const tomar = (t) => {
-    const i = cola.get(t.id)[0];
-    const m = minPaso(t, t.pasos[i]);
+  const tomar = (e) => {
+    const i = e.cola[0], m = minPaso(e.t, e.t.pasos[i]);
     if (usado + m > presupuesto) return 0;
-    cola.get(t.id).shift(); elegidos.get(t.id).push(i); usado += m;
+    e.cola.shift(); elegidos.get(e.t.id).push(i); usado += m;
     return m;
   };
-  // 1) A cada trabajo, lo mínimo de hoy para llegar a tiempo (pendiente ÷ días que quedan)
-  for (const t of orden){
-    const pend = cola.get(t.id).reduce((s,i) => s + minPaso(t, t.pasos[i]), 0);
-    const cuota = pend / Math.max(diasRestantes(t.fechaEntrega), 1);
+  // 1) A cada trabajo, lo mínimo de ese día para llegar a tiempo (pendiente ÷ días que quedan)
+  for (const e of orden){
+    const cuota = pendMin(e) / Math.max(dias(e), 1);
     necesario += cuota;
     let hecho = 0;
-    while (hecho < cuota && cola.get(t.id).length){ const m = tomar(t); if (!m) break; hecho += m; }
+    while (hecho < cuota && e.cola.length){ const m = tomar(e); if (!m) break; hecho += m; }
   }
   // 2) El tiempo que sobra, a los trabajos más prioritarios
-  for (const t of orden){ while (cola.get(t.id).length && tomar(t)); }
-  // 3) Nunca un plan vacío: al menos un paso del más prioritario
-  if (!usado && orden.length){ const t = orden[0]; elegidos.get(t.id).push(cola.get(t.id).shift()); }
-  return { fecha: hoyISO(), horas: horasDia, firma: firma(), necesario,
-    items: orden.filter(t => elegidos.get(t.id).length).map(t => ({ tid: t.id, pasos: elegidos.get(t.id) })) };
+  for (const e of orden){ while (e.cola.length && tomar(e)); }
+  // 3) Nunca un día vacío: al menos un paso del más prioritario
+  if (!usado && orden.length){ const e = orden[0]; elegidos.get(e.t.id).push(e.cola.shift()); }
+  return { necesario, items: orden.filter(e => elegidos.get(e.t.id).length).map(e => ({ tid: e.t.id, pasos: elegidos.get(e.t.id) })) };
+}
+const colaPendiente = (t, excluir) => t.pasos.map((p, i) => i).filter(i => !t.pasos[i].hecho && !excluir?.has(t.id + ":" + i));
+function generarPlan(){
+  const estado = trabajos.map(t => ({ t, cola: colaPendiente(t) })).filter(e => e.cola.length);
+  const r = repartir(estado, hoyISO(), horasDia * 60);
+  return { fecha: hoyISO(), horas: horasDia, firma: firma(), necesario: r.necesario, items: r.items };
 }
 function planDeHoy(forzar){
   let plan = null;
@@ -433,7 +796,30 @@ function planDeHoy(forzar){
   }
   return plan;
 }
+const gruposPlan = (items) => items
+  .map(it => { const t = porId(it.tid); return t && { t, pasos: it.pasos.filter(i => t.pasos[i]) }; })
+  .filter(g => g && g.pasos.length);
+// Previsión día a día hasta terminarlo todo (hoy = plan de hoy).
+function proyeccion(){
+  const hoy = hoyISO(), plan = planDeHoy();
+  const dias = new Map([[hoy, plan.items]]);
+  const fin = {};
+  const enHoy = new Set();
+  gruposPlan(plan.items).forEach(g => g.pasos.forEach(i => {
+    enHoy.add(g.t.id + ":" + i);
+    if (!g.t.pasos[i].hecho) fin[g.t.id] = hoy;
+  }));
+  const estado = trabajos.map(t => ({ t, cola: colaPendiente(t, enHoy) })).filter(e => e.cola.length);
+  let f = hoy;
+  for (let n = 0; n < 366 && estado.some(e => e.cola.length); n++){
+    f = sumarDias(f, 1);
+    const r = repartir(estado, f, horasDia * 60);
+    if (r.items.length){ dias.set(f, r.items); r.items.forEach(it => fin[it.tid] = f); }
+  }
+  return { dias, fin };
+}
 
+// ---------- Pestaña Hoy ----------
 function pintarHoy(forzar){
   if (!trabajos.length){
     $("hoy").innerHTML = `<div class="empty">No hay nada que planificar.<br>Añade un trabajo con <b>+ Nuevo</b>.</div>`;
@@ -441,17 +827,20 @@ function pintarHoy(forzar){
   }
   const plan = planDeHoy(forzar);
   const presupuesto = horasDia * 60;
-  const grupos = plan.items
-    .map(it => { const t = trabajos.find(x => x.id === it.tid); return t && { t, pasos: it.pasos.filter(i => t.pasos[i]) }; })
-    .filter(g => g && g.pasos.length);
-  let total = 0, hecho = 0;
-  grupos.forEach(g => g.pasos.forEach(i => { const m = minPaso(g.t, g.t.pasos[i]); total += m; if (g.t.pasos[i].hecho) hecho += m; }));
+  const grupos = gruposPlan(plan.items);
+  let total = 0, hecho = 0, sig = null;
+  grupos.forEach(g => g.pasos.forEach(i => {
+    const m = minPaso(g.t, g.t.pasos[i]); total += m;
+    if (g.t.pasos[i].hecho) hecho += m; else sig ||= { t: g.t, i };
+  }));
 
   let html = `<div class="card">
       <h2>Plan de hoy</h2>
-      <div class="muted">≈ ${fmt(total)} de trabajo · tienes ${fmt(presupuesto)}</div>
+      <div class="muted">≈ ${fmt(total)} de trabajo${ritmo().n ? " (a tu ritmo)" : ""} · tienes ${fmt(presupuesto)}</div>
       <div class="bar"><div style="width:${total ? hecho/total*100 : 0}%"></div></div>
       <div class="muted" style="margin-top:4px">${fmt(hecho)} hechos · quedan ${fmt(total - hecho)}</div>
+      ${sesion ? `<button id="btnEmpezarYa" style="width:100%;margin-top:12px">⏱ Ver temporizador</button>`
+        : sig ? `<button id="btnEmpezarYa" style="width:100%;margin-top:12px">▶ Empezar: ${esc(corto(sig.t.pasos[sig.i].accion, 46))}</button>` : ""}
     </div>`;
 
   const vencidos = trabajos.filter(t => diasRestantes(t.fechaEntrega) < 0 && t.pasos.some(p => !p.hecho));
@@ -467,33 +856,130 @@ function pintarHoy(forzar){
     const ultimo = t.pasos[pasos[pasos.length - 1]];
     const cumplido = pasos.every(i => t.pasos[i].hecho);
     html += `<div class="card grupo">
-      <h3 data-abrir="${t.id}" style="cursor:pointer">${esc(t.titulo)} ›</h3>
+      <h3 data-abrir="${t.id}" style="cursor:pointer;display:flex;align-items:center;gap:8px"><span class="punto" style="background:${t.color}"></span>${esc(t.titulo)} ›</h3>
       <div class="chips"><span class="prio" style="background:${color}">${txt}</span>
         <span class="chip">${textoDias(diasRestantes(t.fechaEntrega))}</span>
         <span class="chip">≈ ${fmt(pasos.reduce((s,i) => s + minPaso(t, t.pasos[i]), 0))}</span></div>
-      <div class="hasta">${cumplido ? "✓ Objetivo de hoy cumplido" : `Hoy: hasta «${esc(ultimo.accion)}» (paso ${pasos[pasos.length-1] + 1} de ${t.pasos.length})`}</div>`;
-    pasos.forEach(i => {
-      const p = t.pasos[i];
-      html += `<div class="paso ${p.hecho ? "hecho" : ""}">
-          <input type="checkbox" data-t="${t.id}" data-i="${i}" ${p.hecho ? "checked" : ""} aria-label="Hecho">
-          <div class="cuerpo"><div class="accion">${esc(p.accion)}</div><div class="detalle">${esc(p.detalle)} · ≈ ${fmt(minPaso(t, p))}</div></div>
-          <button class="mini" data-t="${t.id}" data-duda="${i}" aria-label="Duda">❓</button>
-        </div>`;
-    });
-    html += `</div>`;
+      <div class="hasta">${cumplido ? "✓ Objetivo de hoy cumplido" : `Hoy: hasta «${esc(ultimo.accion)}» (paso ${pasos[pasos.length-1] + 1} de ${t.pasos.length})`}</div>
+      ${pasos.map(i => filaPaso(t, i)).join("")}
+    </div>`;
   });
   html += `<button class="ghost" id="btnRecalcular" style="width:100%">↻ Recalcular plan</button>`;
 
   $("hoy").innerHTML = html;
-  $("hoy").querySelectorAll("input[type=checkbox]").forEach(cb => cb.onchange = () =>
-    marcarPaso(trabajos.find(x => x.id === cb.dataset.t), Number(cb.dataset.i), cb.checked));
-  $("hoy").querySelectorAll("[data-duda]").forEach(b => b.onclick = () => { actualId = b.dataset.t; abrirDuda(Number(b.dataset.duda)); });
-  $("hoy").querySelectorAll("[data-abrir]").forEach(h => h.onclick = () => abrir(h.dataset.abrir));
+  cablear($("hoy"));
   $("btnRecalcular").onclick = () => { pintarHoy(true); aviso("Plan recalculado"); };
   if ($("btnMas")) $("btnMas").onclick = () => pintarHoy(true);
+  if ($("btnEmpezarYa")) $("btnEmpezarYa").onclick = () => sesion ? abrirFoco() : empezar(sig.t, sig.i);
 }
 
-// ---------- Lista de trabajos ----------
+// ---------- Pestaña Calendario ----------
+let mesCal = null, diaSel = null;
+const SEMANA = ["L","M","X","J","V","S","D"];
+function pintarCalendario(){
+  if (!trabajos.length){
+    $("calendario").innerHTML = `<div class="empty">El calendario se llena solo cuando añades trabajos.<br>Pulsa <b>+ Nuevo</b>.</div>`;
+    return;
+  }
+  const hoy = hoyISO();
+  diaSel ||= hoy;
+  if (!mesCal){ const d = new Date(); mesCal = { y: d.getFullYear(), m: d.getMonth() }; }
+  const { dias: plan, fin } = proyeccion();
+  const entregas = new Map(), hechos = new Map();
+  const meter = (m, k, v) => { if (!m.has(k)) m.set(k, []); m.get(k).push(v); };
+  trabajos.forEach(t => {
+    meter(entregas, t.fechaEntrega, t);
+    t.pasos.forEach((p, i) => { if (p.hecho && p.hechoEn) meter(hechos, p.hechoEn, { t, i }); });
+  });
+  const trabajosDia = (iso) => {
+    const ids = new Set();
+    if (iso >= hoy) (plan.get(iso) || []).forEach(it => ids.add(it.tid));
+    if (iso <= hoy) (hechos.get(iso) || []).forEach(x => ids.add(x.t.id));
+    return [...ids].map(porId).filter(Boolean);
+  };
+
+  const primero = new Date(mesCal.y, mesCal.m, 1);
+  const hueco = (primero.getDay() + 6) % 7;   // la semana empieza en lunes
+  const diasMes = new Date(mesCal.y, mesCal.m + 1, 0).getDate();
+  let celdas = SEMANA.map(s => `<div class="sem">${s}</div>`).join("");
+  for (let i = 0; i < hueco; i++) celdas += `<div class="dia vacio"></div>`;
+  for (let d = 1; d <= diasMes; d++){
+    const iso = isoDe(new Date(mesCal.y, mesCal.m, d));
+    const ents = entregas.get(iso) || [], ts = trabajosDia(iso);
+    const cls = [iso === hoy && "hoy", iso === diaSel && "sel", iso < hoy && "pasado", ents.length && "entrega"].filter(Boolean).join(" ");
+    celdas += `<div class="dia ${cls}" data-dia="${iso}" ${ents.length ? `style="--c:${ents[0].color}"` : ""} role="button" aria-label="${fechaLarga(iso)}">
+        <span>${d}</span>${ents.length ? `<span class="bandera">🏁</span>` : ""}
+        <span class="puntos">${ts.slice(0, 4).map(t => `<span class="punto" style="background:${t.color}"></span>`).join("")}</span>
+      </div>`;
+  }
+  const nombreMes = primero.toLocaleDateString("es-ES", { month: "long", year: "numeric" }).replace(/^./, c => c.toUpperCase());
+
+  let html = "";
+  const tarde = trabajos.filter(t => fin[t.id] && fin[t.id] > t.fechaEntrega && t.fechaEntrega >= hoy);
+  if (tarde.length) html += `<div class="alerta">⏳ Con ${fmt(horasDia * 60)} al día no llegas a tiempo a: ${tarde.map(t =>
+    `«${esc(t.titulo)}» (terminarías el ${fechaCorta(fin[t.id])}, entrega el ${fechaCorta(t.fechaEntrega)})`).join("; ")}. Sube tus horas al día.</div>`;
+  html += `<div class="card">
+      <div class="cal-cab">
+        <button class="mini" id="calPrev" aria-label="Mes anterior">‹</button>
+        <h2>${nombreMes}</h2>
+        <button class="mini" id="calHoy">Hoy</button>
+        <button class="mini" id="calNext" aria-label="Mes siguiente">›</button>
+      </div>
+      <div class="cal">${celdas}</div>
+      <div class="leyenda">${trabajos.map(t => `<span data-abrir="${t.id}"><span class="punto" style="background:${t.color}"></span>${esc(corto(t.titulo, 28))} · 🏁 ${fechaCorta(t.fechaEntrega)}</span>`).join("")}</div>
+    </div>`;
+  html += detalleDia(diaSel, hoy, plan, entregas, hechos);
+
+  $("calendario").innerHTML = html;
+  cablear($("calendario"));
+  $("calendario").querySelectorAll("[data-dia]").forEach(c => c.onclick = () => { diaSel = c.dataset.dia; pintarCalendario(); });
+  const mover = (n) => { const d = new Date(mesCal.y, mesCal.m + n, 1); mesCal = { y: d.getFullYear(), m: d.getMonth() }; pintarCalendario(); };
+  $("calPrev").onclick = () => mover(-1);
+  $("calNext").onclick = () => mover(1);
+  $("calHoy").onclick = () => { mesCal = null; diaSel = hoy; pintarCalendario(); };
+}
+function detalleDia(iso, hoy, plan, entregas, hechos){
+  let html = `<div class="card"><h2>${fechaLarga(iso).replace(/^./, c => c.toUpperCase())}${iso === hoy ? " · hoy" : ""}</h2>`;
+  let algo = false;
+  const ents = entregas.get(iso) || [];
+  if (ents.length){
+    algo = true;
+    html += `<div class="seccion-dia">🏁 Entrega${ents.length > 1 ? "s" : ""}</div>` + ents.map(t => {
+      const queda = minPendientes(t);
+      return `<div class="item-dia" data-abrir="${t.id}"><span class="punto" style="background:${t.color}"></span><b>${esc(t.titulo)}</b><span class="muted">· ${queda ? "quedan ≈ " + fmt(queda) : "todo hecho"}</span></div>`;
+    }).join("");
+  }
+  const mostrados = new Set();
+  if (iso >= hoy){
+    const grupos = gruposPlan(plan.get(iso) || []);
+    if (grupos.length){
+      algo = true;
+      const total = grupos.reduce((s, g) => s + g.pasos.reduce((x, i) => x + minPaso(g.t, g.t.pasos[i]), 0), 0);
+      html += `<div class="seccion-dia">${iso === hoy ? "📋 Plan de hoy" : "🗓️ Previsto"} · ≈ ${fmt(total)}</div>`;
+      grupos.forEach(({ t, pasos }) => {
+        html += `<div class="titulo-grupo" data-abrir="${t.id}"><span class="punto" style="background:${t.color}"></span>${esc(t.titulo)} ›</div>`;
+        html += iso === hoy
+          ? pasos.map(i => { mostrados.add(t.id + ":" + i); return filaPaso(t, i); }).join("")
+          : pasos.map(i => { const p = t.pasos[i]; return `<div class="previsto"><span>${TIPOS[p.tipo]?.ico || "•"}</span><span class="txt">${esc(p.accion)}</span><span class="muted">≈ ${fmt(minPaso(t, p))}</span></div>`; }).join("");
+      });
+      if (iso > hoy) html += `<div class="muted" style="margin-top:10px">Previsión con ${fmt(horasDia * 60)} al día${ritmo().n ? " y tu ritmo" : ""}. Se recalcula sola cuando avanzas.</div>`;
+    }
+  }
+  if (iso <= hoy){
+    const lista = (hechos.get(iso) || []).filter(x => !mostrados.has(x.t.id + ":" + x.i));
+    if (lista.length){
+      algo = true;
+      html += `<div class="seccion-dia">✓ ${iso === hoy ? "También hecho hoy" : "Hecho"}</div>` + lista.map(({ t, i }) => {
+        const p = t.pasos[i];
+        return `<div class="previsto"><span class="punto" style="background:${t.color};margin-top:7px"></span><span class="txt">${esc(p.accion)}</span><span class="muted">${(p.segundos || 0) >= 60 ? "⏱ " + fmt(p.segundos / 60) : ""}</span></div>`;
+      }).join("");
+    }
+  }
+  if (!algo) html += `<div class="muted">Nada para este día.</div>`;
+  return html + `</div>`;
+}
+
+// ---------- Pestaña Trabajos ----------
 function pintarTrabajos(){
   if (!trabajos.length){
     $("lista").innerHTML = `<div class="empty">Aún no tienes trabajos.<br>Pulsa <b>+ Nuevo</b> y sube el primero.</div>`;
@@ -503,15 +989,15 @@ function pintarTrabajos(){
   $("lista").innerHTML = orden.map((t, i) => {
     const [txt, color] = etiqueta(prioridad(t));
     const hechos = t.pasos.filter(p => p.hecho).length;
-    return `<div class="card tarea" data-id="${t.id}">
+    return `<div class="card tarea" data-id="${t.id}" style="--c:${t.color}">
       <div class="rank">${i+1}</div>
       <div class="info">
         <div class="titulo">${esc(t.titulo)}</div>
         <div class="muted">${esc(t.asignatura)} · ${textoDias(diasRestantes(t.fechaEntrega))}</div>
         <div class="chips">
-          <span class="chip">⏱ ${horasPendientes(t).toFixed(1)} h</span>
+          <span class="chip">⏱ ${(horasPendientes(t)).toFixed(1).replace(".", ",")} h</span>
           <span class="chip">🧠 ${puntos(t.dificultad)}</span>
-          ${t.fuentes.length ? `<span class="chip">📚 ${t.fuentes.length}</span>` : ""}
+          <span class="chip">📄 ${t.docs.length}</span>
         </div>
         <div class="bar"><div style="width:${t.pasos.length ? hechos/t.pasos.length*100 : 0}%"></div></div>
       </div>
@@ -521,17 +1007,17 @@ function pintarTrabajos(){
       </div>
     </div>`;
   }).join("");
-  document.querySelectorAll(".tarea").forEach(el => el.onclick = () => abrir(el.dataset.id));
-  document.querySelectorAll(".borrar").forEach(b => b.onclick = (e) => {
+  $("lista").querySelectorAll(".tarea").forEach(el => el.onclick = () => abrir(el.dataset.id));
+  $("lista").querySelectorAll(".borrar").forEach(b => b.onclick = (e) => {
     e.stopPropagation();
-    const t = trabajos.find(x => x.id === b.dataset.id);
-    if (confirm(`¿Borrar «${t.titulo}» y todas sus fuentes?`)) { borrarTrabajo(t.id); pintarLista(); }
+    const t = porId(b.dataset.id);
+    if (confirm(`¿Borrar «${t.titulo}» con sus instrucciones y documentos?`)) { borrarTrabajo(t.id); pintarLista(); }
   });
 }
 
-// ---------- Detalle ----------
+// ---------- Detalle de un trabajo ----------
 let actualId = null;
-const actual = () => trabajos.find(x => x.id === actualId);
+const actual = () => porId(actualId);
 function abrir(id){ actualId = id; pintarDetalle(); mostrar("vistaDetalle"); }
 
 function pintarDetalle(){
@@ -540,122 +1026,285 @@ function pintarDetalle(){
   const idxActual = t.pasos.findIndex(p => !p.hecho);
   const sig = t.pasos[idxActual];
   const hechos = t.pasos.filter(p => p.hecho).length;
+  const pend = hayCambios(t);
+  const r = ritmo();
 
-  let html = `<div class="card">
+  let html = `<div class="card" style="border-top:5px solid ${t.color}">
       <h2>${esc(t.titulo)}</h2>
-      <div class="muted">${esc(t.asignatura)} · Entrega ${new Date(t.fechaEntrega+"T00:00:00").toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long"})}</div>
+      <div class="muted">${esc(t.asignatura)} · Entrega ${fechaLarga(t.fechaEntrega)}</div>
       <p>${esc(t.resumen)}</p>
       <div class="chips">
-        <span class="chip">⏱ ${t.horasEstimadas} h estimadas</span>
+        <span class="chip">⏱ ${fmt(minTotales(t))} estimadas${r.n ? " a tu ritmo" : ""}</span>
         <span class="chip">🧠 Dificultad ${t.dificultad}/5</span>
-        <span class="chip">📄 ${esc(t.archivo)}</span>
+        <span class="chip">📄 ${t.docs.length} documento${t.docs.length === 1 ? "" : "s"}</span>
       </div>
       <p class="muted">${esc(t.justificacion)}</p>
       <div class="bar"><div style="width:${t.pasos.length ? hechos/t.pasos.length*100 : 0}%"></div></div>
-      <div class="muted" style="margin-top:4px">${hechos} de ${t.pasos.length} pasos</div>
+      <div class="muted" style="margin-top:4px">${hechos} de ${t.pasos.length} micro metas</div>
     </div>`;
 
-  if (sig) html += `<div class="card foco">
-      <div class="muted">Siguiente micro acción · ${sig.minutos} min</div>
+  if (sig){
+    const enMarcha = sesion?.pid === sig.id;
+    html += `<div class="card foco">
+      <div class="muted">Siguiente micro meta · ${TIPOS[sig.tipo]?.ico || "•"} ≈ ${fmt(minPaso(t, sig))}</div>
       <div class="accion">${esc(sig.accion)}</div>
       <div class="muted">${esc(sig.detalle)}</div>
-      <div class="row" style="margin-top:16px">
-        <button class="ghost" data-duda="${idxActual}">❓ Tengo una duda</button>
-        <button id="btnHecho">✓ Hecho, siguiente</button>
-      </div>
-    </div>`;
-
-  // Fuentes
-  html += `<div class="card"><h2>Fuentes</h2>`;
-  html += t.fuentes.length
-    ? t.fuentes.map(f => `<div class="fuente"><span>📚</span><span class="nombre">${esc(f.nombre)}</span>
-         <button class="mini" data-quitar="${f.id}">Quitar</button></div>`).join("")
-    : `<div class="muted">Sin fuentes. Añade apuntes, lecturas o la rúbrica para que la IA te guíe mejor.</div>`;
-  html += `<label for="fuentePegada">Pegar texto como fuente</label>
-      <textarea id="fuentePegada" placeholder="Pega aquí apuntes, un fragmento de lectura, la rúbrica…"></textarea>
+      ${sig.fuente ? `<div class="muted" style="margin-top:4px">📚 ${esc(sig.fuente)}</div>` : ""}
+      <button id="btnEmpezar" style="width:100%;margin-top:16px">${enMarcha ? "⏱ Ver temporizador" : (sig.segundos ? "▶ Seguir" : "▶ Empezar")}</button>
       <div class="row" style="margin-top:10px">
-        <button class="ghost" id="btnSubirFuente">📎 Subir archivo</button>
-        <button class="ghost" id="btnPegarFuente">＋ Añadir texto</button>
+        <button class="ghost" data-t="${t.id}" data-duda="${idxActual}">❓ Tengo una duda</button>
+        <button class="ghost" id="btnHecho">✓ Hecho</button>
       </div>
-      ${t.contenido ? `<button id="btnRehacer" style="width:100%;margin-top:10px">↻ Rehacer guía usando las fuentes</button>
-      <div class="muted" style="margin-top:4px">Crea una guía nueva y reinicia el progreso.</div>` : ""}
+    </div>`;
+  }
+
+  // Instrucciones
+  html += `<div class="card">
+      <h2>Instrucciones</h2>
+      <div class="muted">Cuéntale a la IA qué pide el profesor, cómo quieres organizarte o en qué centrarte. Las micro metas se adaptan a estas instrucciones y a los documentos de este trabajo.</div>
+      <textarea id="instrucciones" style="margin-top:10px;min-height:96px" placeholder="Ej.: máximo 10 páginas en APA; céntrate en el tema 3; quiero pasos de 10 minutos; terminar el borrador antes del viernes…">${esc(t.instrucciones)}</textarea>
+      <div id="avisoCambios" class="cambios ${pend ? "" : "hidden"}">Has cambiado las instrucciones o los documentos desde la última guía.</div>
+      <button id="btnAdaptar" style="width:100%;margin-top:10px">✨ Adaptar micro metas</button>
+      <div class="muted" style="margin-top:4px">Conserva las micro metas hechas y rehace las pendientes.</div>
+      <div class="aislado">🔒 Estas instrucciones y documentos solo los usa la IA dentro de este trabajo.</div>
     </div>`;
 
-  // Pasos
-  html += `<div class="card">`;
+  // Micro metas
+  html += `<div class="card"><h2>Micro metas</h2>`;
   t.fases.forEach((nombre, fi) => {
-    html += `<div class="fase"><h3>${esc(nombre)}</h3>`;
-    t.pasos.forEach((p, pi) => {
-      if (p.fase !== fi) return;
-      html += `<div class="paso ${p.hecho ? "hecho" : ""} ${pi === idxActual ? "actual" : ""}">
-          <input type="checkbox" data-i="${pi}" ${p.hecho ? "checked" : ""} aria-label="Hecho">
-          <div class="cuerpo"><div class="accion">${esc(p.accion)}</div><div class="detalle">${esc(p.detalle)} · ${p.minutos} min</div></div>
-          <button class="mini" data-duda="${pi}" aria-label="Duda">❓${p.chat?.length ? " " + Math.ceil(p.chat.length/2) : ""}</button>
-        </div>`;
-    });
-    html += `</div>`;
+    const delaFase = t.pasos.map((p, pi) => pi).filter(pi => t.pasos[pi].fase === fi);
+    if (!delaFase.length) return;
+    html += `<div class="fase"><h3>${esc(nombre)}</h3>${delaFase.map(pi => filaPaso(t, pi, pi === idxActual)).join("")}</div>`;
   });
-  html += `</div><button class="peligro" id="btnBorrar" style="width:100%">Eliminar trabajo y sus fuentes</button>`;
+  html += `</div>`;
+
+  // Documentos
+  html += `<div class="card">
+      <h2>Documentos</h2>
+      <div class="docs">${t.docs.length ? t.docs.map(d => filaDoc(d, "det")).join("") : `<div class="docs-vacio">Sin documentos</div>`}</div>
+      <button class="ghost" id="btnSubirDocs" style="width:100%">📎 Añadir documentos</button>
+      <label for="docPegado">…o pega un texto</label>
+      <textarea id="docPegado" placeholder="Apuntes, un fragmento de lectura, la rúbrica…"></textarea>
+      <button class="ghost" id="btnPegarDoc" style="width:100%;margin-top:8px">＋ Añadir texto como fuente</button>
+      <div id="avisoCambiosDocs" class="cambios ${pend ? "" : "hidden"}">Pulsa <b>✨ Adaptar micro metas</b> para que la IA use los cambios. <button class="mini" id="btnAdaptar2">Adaptar ahora</button></div>
+    </div>
+    <button class="peligro" id="btnBorrar" style="width:100%">Eliminar trabajo, instrucciones y documentos</button>`;
 
   $("detalle").innerHTML = html;
+  cablear($("detalle"));
 
-  if (sig) $("btnHecho").onclick = () => marcarPaso(t, idxActual, true);
-  $("detalle").querySelectorAll("input[type=checkbox]").forEach(cb =>
-    cb.onchange = () => marcarPaso(t, Number(cb.dataset.i), cb.checked));
-  $("detalle").querySelectorAll("[data-duda]").forEach(b =>
-    b.onclick = () => abrirDuda(Number(b.dataset.duda)));
-  $("detalle").querySelectorAll("[data-quitar]").forEach(b => b.onclick = () => {
-    t.fuentes = t.fuentes.filter(f => f.id !== b.dataset.quitar); guardar(); pintarDetalle();
-  });
-  $("btnSubirFuente").onclick = () => $("fuentesExtra").click();
-  $("btnPegarFuente").onclick = () => {
-    const txt = $("fuentePegada").value.trim();
+  if (sig){
+    $("btnHecho").onclick = () => marcarPaso(t, idxActual, true);
+    $("btnEmpezar").onclick = () => empezar(t, idxActual);
+  }
+  $("instrucciones").oninput = (e) => { t.instrucciones = e.target.value; guardarPronto(); avisoCambios(t); };
+  $("btnAdaptar").onclick = () => adaptarGuia(t, $("btnAdaptar"));
+  $("btnAdaptar2").onclick = () => adaptarGuia(t, $("btnAdaptar"));
+  $("btnSubirDocs").onclick = () => $("inputDocsDet").click();
+  $("btnPegarDoc").onclick = () => {
+    const txt = $("docPegado").value.trim();
     if (txt.length < 20) return aviso("Pega un texto un poco más largo.");
-    const nombre = prompt("Nombre para esta fuente:", "Apuntes") || "Texto pegado";
-    t.fuentes.push({ id: crypto.randomUUID(), nombre, texto: txt.slice(0, MAX_FUENTE) });
-    if (!guardar()) t.fuentes.pop();
+    const nombre = (prompt("Nombre para este texto:", "Apuntes") || "Texto pegado").trim() || "Texto pegado";
+    t.docs.push({ id: uuid(), nombre, rol: "fuente", texto: txt.slice(0, MAX_DOC) });
+    if (!guardar()) t.docs.pop();
     pintarDetalle();
   };
-  if ($("btnRehacer")) $("btnRehacer").onclick = () => rehacerGuia(t);
   $("btnBorrar").onclick = () => {
-    if (!confirm("¿Eliminar este trabajo y todas sus fuentes?")) return;
+    if (!confirm("¿Eliminar este trabajo con sus instrucciones y documentos?")) return;
     borrarTrabajo(t.id); pintarLista(); mostrar("vistaLista");
   };
 }
-
-$("fuentesExtra").onchange = async (e) => {
-  const t = actual(); if (!t) return;
-  const nuevas = await leerFuentes(e.target.files);
-  t.fuentes.push(...nuevas);
-  if (!guardar()) t.fuentes.splice(-nuevas.length, nuevas.length);
-  else if (nuevas.length) aviso(`${nuevas.length} fuente(s) añadida(s)`);
+function avisoCambios(t){
+  const pend = hayCambios(t);
+  $("avisoCambios")?.classList.toggle("hidden", !pend);
+  $("avisoCambiosDocs")?.classList.toggle("hidden", !pend);
+}
+// Cambiar el tipo o quitar documentos del trabajo abierto
+$("detalle").addEventListener("change", (e) => {
+  const id = e.target.dataset?.detRol, t = actual();
+  const d = id && t?.docs.find(x => x.id === id);
+  if (!d) return;
+  d.rol = e.target.value; guardar(); pintarDetalle();
+});
+$("detalle").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-det-quitar]"), t = actual();
+  if (!b || !t) return;
+  const d = t.docs.find(x => x.id === b.dataset.detQuitar);
+  if (!d) return;
+  const ultimoEnunciado = d.rol === "enunciado" && t.docs.filter(x => x.rol === "enunciado").length === 1;
+  if (ultimoEnunciado && !confirm(`«${d.nombre}» es el único enunciado. Sin enunciado no podrás adaptar las micro metas. ¿Quitarlo igualmente?`)) return;
+  t.docs = t.docs.filter(x => x !== d); guardar(); pintarDetalle();
+});
+$("inputDocsDet").onchange = async (e) => {
+  const t = actual(), files = [...e.target.files];
   e.target.value = "";
-  pintarDetalle();
+  if (!t || !files.length) return;
+  aviso(`Leyendo ${files.length} documento${files.length > 1 ? "s" : ""}…`);
+  const nuevos = [];
+  for (const f of files){
+    if (t.docs.some(d => d.nombre === f.name)){ aviso(`«${f.name}» ya está en este trabajo`); continue; }
+    try {
+      const hayEnunciado = t.docs.some(d => d.rol === "enunciado") || nuevos.some(d => d.rol === "enunciado");
+      nuevos.push({ id: uuid(), nombre: f.name, rol: rolInicial(f.name, hayEnunciado), texto: await leerTexto(f) });
+    } catch { aviso(`No pude leer texto de «${f.name}» (¿PDF escaneado?)`); }
+  }
+  if (!nuevos.length) return;
+  t.docs.push(...nuevos);
+  if (!guardar()){ t.docs.splice(-nuevos.length); }
+  else aviso(`${nuevos.length} documento${nuevos.length > 1 ? "s añadidos" : " añadido"}`);
+  if (actual() === t) pintarDetalle();
 };
 
-async function rehacerGuia(t){
-  if (!confirm("Se creará una guía nueva usando las fuentes y se reiniciará el progreso. ¿Continuar?")) return;
-  const btn = $("btnRehacer");
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Rehaciendo guía…';
+async function adaptarGuia(t, btn){
+  if (!t.docs.some(d => d.rol === "enunciado")) return aviso("Este trabajo no tiene enunciado: añade un documento y márcalo como «Enunciado».");
+  const hechos = t.pasos.filter(p => p.hecho);
+  const pierdeChats = t.pasos.some(p => !p.hecho && p.chat?.length);
+  if (!confirm(`La IA rehará las micro metas pendientes con tus instrucciones y documentos.${hechos.length ? ` Se conservan las ${hechos.length} ya hechas.` : ""}${pierdeChats ? " Se perderán las dudas de las pendientes." : ""} ¿Continuar?`)) return;
+  if (sesion?.tid === t.id) detenerSesion();
+  const textoBtn = btn.textContent;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Adaptando…';
   try {
     const data = await analizarEnDirecto({
-      contenido: t.contenido, fechaEntrega: t.fechaEntrega, nombreArchivo: t.archivo,
-      notas: t.notas, fuentes: fuentesParaIA(t)
-    }, btn, "Rehaciendo guía");
-    aplicarAnalisis(t, data);
-    guardar(); pintarDetalle(); window.scrollTo(0,0);
-    aviso("Guía actualizada con tus fuentes");
+      fechaEntrega: t.fechaEntrega, ...contextoIA(t), ritmo: ritmoParaIA(),
+      modo: "adaptar", hechos: hechos.map(p => p.accion)
+    }, btn, "Adaptando micro metas");
+    const conservados = hechos.map(p => ({ ...p, minutos: minBase(t, p) }));
+    aplicarAnalisis(t, data, { conservados, adaptar: true });
+    guardar();
+    if (actual() === t){ pintarDetalle(); window.scrollTo(0, 0); }
+    aviso("Micro metas adaptadas a tus instrucciones y documentos");
   } catch (e){
     aviso(e.message);
-    btn.disabled = false; btn.textContent = "↻ Rehacer guía usando las fuentes";
+    if (btn.isConnected){ btn.disabled = false; btn.textContent = textoBtn; }
   }
 }
+
+// ---------- Temporizador de concentración ----------
+function cargarSesion(){ try { return JSON.parse(localStorage.getItem(CLAVE_SESION)) || null; } catch { return null; } }
+function guardarSesion(){ try { sesion ? localStorage.setItem(CLAVE_SESION, JSON.stringify(sesion)) : localStorage.removeItem(CLAVE_SESION); } catch {} }
+const tiempoSesion = () => sesion ? sesion.acumulado + (sesion.inicio ? Date.now() - sesion.inicio : 0) : 0;
+function pasoDeSesion(){
+  const t = sesion && porId(sesion.tid);
+  const i = t ? t.pasos.findIndex(p => p.id === sesion.pid) : -1;
+  return i >= 0 ? { t, i, p: t.pasos[i] } : null;
+}
+// Guarda en el paso el tiempo medido hasta ahora.
+function volcar(){ const x = pasoDeSesion(); if (x){ x.p.segundos = Math.round(tiempoSesion() / 1000); guardar(); } }
+
+function empezar(t, i){
+  const p = t?.pasos[i];
+  if (!p) return;
+  if (sesion && sesion.pid !== p.id){
+    const otro = pasoDeSesion();
+    if (otro && !confirm(`Tienes en marcha «${corto(otro.p.accion, 60)}». ¿Lo paras y empiezas este?`)) return;
+    detenerSesion();
+  }
+  prepararAudio();
+  if (!sesion){
+    const acumulado = (p.segundos || 0) * 1000;
+    sesion = { tid: t.id, pid: p.id, inicio: Date.now(), acumulado, avisado: acumulado >= minPaso(t, p) * 60000 };
+  } else if (!sesion.inicio) sesion.inicio = Date.now();
+  guardarSesion(); pedirPantalla(); abrirFoco(); repintar();
+}
+function pausarOSeguir(){
+  if (!sesion) return;
+  if (sesion.inicio){ sesion.acumulado = tiempoSesion(); sesion.inicio = null; volcar(); soltarPantalla(); }
+  else { sesion.inicio = Date.now(); prepararAudio(); pedirPantalla(); }
+  guardarSesion(); tick();
+}
+function detenerSesion(){
+  if (!sesion) return;
+  volcar();
+  sesion = null; guardarSesion(); soltarPantalla(); cerrarFoco();
+}
+function abrirFoco(){ $("fondoFoco").classList.remove("hidden"); document.body.style.overflow = "hidden"; tick(); }
+function cerrarFoco(){
+  if ($("fondoFoco").classList.contains("hidden")) return;
+  $("fondoFoco").classList.add("hidden");
+  if ($("fondoDuda").classList.contains("hidden")) document.body.style.overflow = "";
+  tick();
+}
+$("btnMinFoco").onclick = () => { cerrarFoco(); repintar(); };
+$("fondoFoco").onclick = (e) => { if (e.target === $("fondoFoco")){ cerrarFoco(); repintar(); } };
+$("btnPausa").onclick = pausarOSeguir;
+$("btnBarraPausa").onclick = (e) => { e.stopPropagation(); pausarOSeguir(); };
+$("barraFoco").onclick = abrirFoco;
+$("btnTerminado").onclick = () => { const x = pasoDeSesion(); if (x) marcarPaso(x.t, x.i, true); else detenerSesion(); };
+$("btnDetener").onclick = () => {
+  const x = pasoDeSesion();
+  detenerSesion();
+  if (x) aviso(`Guardado: llevas ${fmt((x.p.segundos || 0) / 60)} en este paso. Pulsa ▶ para seguir cuando quieras.`);
+  repintar();
+};
+$("btnDudaFoco").onclick = () => { const x = pasoDeSesion(); if (x){ actualId = x.t.id; abrirDuda(x.i); } };
+
+const VUELTA = 2 * Math.PI * 52;
+function tick(){
+  const x = sesion && pasoDeSesion();
+  if (sesion && !x){ sesion = null; guardarSesion(); cerrarFoco(); }
+  const abierto = !$("fondoFoco").classList.contains("hidden");
+  const barra = !!x && !abierto;
+  $("barraFoco").classList.toggle("hidden", !barra);
+  document.body.classList.toggle("con-barra", barra);
+  if (!x) return;
+  const ms = tiempoSesion(), meta = Math.max(1, minPaso(x.t, x.p)) * 60000, extra = ms > meta, enPausa = !sesion.inicio;
+  if (!enPausa && !sesion.avisado && extra){ sesion.avisado = true; guardarSesion(); pitido(); }
+  if (abierto){
+    $("focoColor").style.background = x.t.color;
+    $("focoTrabajo").textContent = x.t.titulo;
+    $("focoAccion").textContent = x.p.accion;
+    $("focoDetalle").textContent = x.p.detalle + (x.p.fuente ? `  📚 ${x.p.fuente}` : "");
+    $("focoTiempo").textContent = reloj(ms);
+    $("focoMeta").textContent = extra ? `+${reloj(ms - meta)} sobre ≈ ${fmt(meta / 60000)}` : `de ≈ ${fmt(meta / 60000)}`;
+    $("focoAro").style.strokeDashoffset = VUELTA * (1 - Math.min(1, ms / meta));
+    $("focoReloj").classList.toggle("extra", extra);
+    $("focoReloj").classList.toggle("pausa", enPausa);
+    $("btnPausa").textContent = enPausa ? "▶ Seguir" : "⏸️ Pausar";
+    $("focoAviso").textContent = enPausa ? "En pausa. Pulsa «Seguir» cuando vuelvas."
+      : extra ? "⏰ Has llegado al tiempo estimado. ¿Lo terminas o sigues un poco más?" : "";
+  } else {
+    $("barraIco").textContent = enPausa ? "⏸️" : "⏱";
+    $("barraTiempo").textContent = reloj(ms);
+    $("barraAccion").textContent = x.p.accion;
+    $("btnBarraPausa").textContent = enPausa ? "▶" : "⏸️";
+  }
+}
+// Aviso suave al llegar al tiempo estimado
+let audioCtx = null;
+function prepararAudio(){
+  try { audioCtx ||= new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === "suspended") audioCtx.resume(); } catch {}
+}
+function pitido(){
+  try { navigator.vibrate?.([200, 100, 200]); } catch {}
+  if (!audioCtx) return;
+  try {
+    [0, 0.25].forEach(d => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t0 = audioCtx.currentTime + d;
+      o.frequency.value = 880; o.connect(g); g.connect(audioCtx.destination);
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.2, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+      o.start(t0); o.stop(t0 + 0.2);
+    });
+  } catch {}
+}
+// Mantener la pantalla encendida mientras corre el temporizador
+let bloqueo = null;
+async function pedirPantalla(){
+  try {
+    if (!bloqueo && "wakeLock" in navigator && document.visibilityState === "visible"){
+      bloqueo = await navigator.wakeLock.request("screen");
+      bloqueo.addEventListener?.("release", () => { bloqueo = null; });
+    }
+  } catch { bloqueo = null; }
+}
+function soltarPantalla(){ try { bloqueo?.release(); } catch {} bloqueo = null; }
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && sesion?.inicio) pedirPantalla(); tick(); });
 
 // ---------- Chat de dudas ----------
 let dudaIdx = null;
 function abrirDuda(i){
+  const p = actual()?.pasos[i];
+  if (!p) return;
   dudaIdx = i;
-  const p = actual().pasos[i];
   p.chat = p.chat || [];
   $("dudaTitulo").textContent = p.accion;
   pintarChat();
@@ -664,12 +1313,13 @@ function abrirDuda(i){
 }
 function cerrarDuda(){
   $("fondoDuda").classList.add("hidden");
-  document.body.style.overflow = "";
+  if ($("fondoFoco").classList.contains("hidden")) document.body.style.overflow = "";
   repintar();
 }
 function pintarChat(cargando, parcial){
-  const p = actual().pasos[dudaIdx];
-  let html = p.chat.length ? "" : `<div class="muted" style="padding:8px 0">${esc(p.detalle)}<br><br>Pregunta lo que quieras sobre este paso o pulsa «Dame pasos más detallados».</div>`;
+  const p = actual()?.pasos[dudaIdx];
+  if (!p) return;
+  let html = p.chat.length ? "" : `<div class="muted" style="padding:8px 0">${esc(p.detalle)}<br><br>Pregunta lo que quieras sobre esta micro meta o pulsa «Dame pasos más detallados».<br>🔒 La IA solo ve las instrucciones y documentos de este trabajo.</div>`;
   html += p.chat.map(m => `<div class="msg ${m.role}">${esc(m.content)}</div>`).join("");
   if (parcial) html += `<div class="msg assistant">${esc(parcial)}</div>`;
   else if (cargando) html += `<div class="msg assistant"><span class="spinner"></span>Pensando…</div>`;
@@ -679,7 +1329,8 @@ function pintarChat(cargando, parcial){
 async function enviarDuda(pregunta){
   pregunta = pregunta.trim();
   if (!pregunta) return;
-  const t = actual(), p = t.pasos[dudaIdx];
+  const t = actual(), p = t?.pasos[dudaIdx];
+  if (!p) return;
   const historial = p.chat.slice();
   p.chat.push({ role: "user", content: pregunta });
   $("dudaInput").value = "";
@@ -688,9 +1339,9 @@ async function enviarDuda(pregunta){
   try {
     const respuesta = await llamarEnDirecto("/api/duda", {
       trabajo: { titulo: t.titulo, asignatura: t.asignatura, resumen: t.resumen },
-      paso: { accion: p.accion, detalle: p.detalle },
-      fuentes: fuentesParaIA(t), historial, pregunta
-    }, (txt) => { if (txt) pintarChat(true, txt); });
+      paso: { accion: p.accion, detalle: p.detalle, fuente: p.fuente || "" },
+      ...contextoIA(t), historial, pregunta
+    }, (txt) => { if (txt && actual()?.pasos[dudaIdx] === p) pintarChat(true, txt); });
     p.chat.push({ role: "assistant", content: respuesta.trim() });
     guardar();
   } catch (e){
@@ -705,9 +1356,16 @@ async function enviarDuda(pregunta){
 $("btnCerrarDuda").onclick = cerrarDuda;
 $("fondoDuda").onclick = (e) => { if (e.target === $("fondoDuda")) cerrarDuda(); };
 $("btnEnviarDuda").onclick = () => enviarDuda($("dudaInput").value);
-$("btnDetallar").onclick = () => enviarDuda("Explícame este paso dividido en sub-pasos más pequeños y detallados.");
+$("btnDetallar").onclick = () => enviarDuda("Explícame esta micro meta dividida en sub-pasos más pequeños y detallados.");
 
+// ---------- Inicio ----------
+{ const r = cargar(); trabajos = r.lista; if (r.cambios) guardar(); }
+registros = cargarRitmo();
+sesion = cargarSesion();
+$("horasDia").value = horasDia;
+pintarDocsForm();
 pintarLista();
+setInterval(tick, 500);
 </script>
 </body>
 </html>

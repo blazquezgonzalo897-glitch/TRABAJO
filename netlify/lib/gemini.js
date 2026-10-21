@@ -33,12 +33,43 @@ export function json(data, status = 200) {
   });
 }
 
-export function textoFuentes(fuentes, max) {
+// Une varios documentos en un texto de como mucho `max` caracteres.
+// Reparto justo: los documentos cortos ceden lo que les sobra a los largos.
+export function textoFuentes(fuentes, max, etiqueta = "FUENTE") {
   if (!Array.isArray(fuentes) || !fuentes.length) return "";
-  const porFuente = Math.floor(max / fuentes.length);
-  return fuentes
-    .map((f, i) => `--- FUENTE ${i + 1}: ${f.nombre || "sin nombre"} ---\n${String(f.texto || "").slice(0, porFuente)}`)
+  const lista = fuentes.slice(0, 40).map((f, i) => ({
+    i,
+    nombre: String(f?.nombre || "sin nombre").slice(0, 200),
+    texto: String(f?.texto || ""),
+  }));
+  const cupo = [];
+  let restante = max;
+  let quedan = lista.length;
+  [...lista].sort((a, b) => a.texto.length - b.texto.length).forEach((f) => {
+    cupo[f.i] = Math.min(f.texto.length, Math.floor(restante / quedan));
+    restante -= cupo[f.i];
+    quedan--;
+  });
+  return lista
+    .map((f) => `--- ${etiqueta} ${f.i + 1}: ${f.nombre} ---\n${f.texto.slice(0, cupo[f.i])}`)
     .join("\n\n");
+}
+
+// Tipos de micro meta. La app mide cuánto tarda el estudiante en cada tipo.
+export const TIPOS = ["lectura", "investigacion", "organizacion", "escritura", "calculo", "programacion", "diseno", "revision", "entrega", "otro"];
+
+// Resumen del ritmo medido con el temporizador (solo números, nunca contenido de otros trabajos).
+export function textoRitmo(ritmo) {
+  if (!ritmo || typeof ritmo !== "object") return "";
+  const g = Number(ritmo.global);
+  const n = Math.round(Number(ritmo.medidos) || 0);
+  if (!(g > 0) || n < 1) return "";
+  const partes = [`en general tarda ${g.toFixed(2)}× lo que tardaría un estudiante medio (${n} pasos medidos con el temporizador)`];
+  for (const [tipo, valor] of Object.entries(ritmo.tipos || {})) {
+    const x = Number(valor);
+    if (TIPOS.includes(tipo) && x > 0) partes.push(`${tipo}: ${x.toFixed(2)}×`);
+  }
+  return partes.join("; ");
 }
 
 // Devuelve una Response que empieza a enviar datos al momento.
