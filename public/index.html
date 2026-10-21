@@ -575,7 +575,7 @@ function aplicarAnalisis(t, data, { conservados = [], adaptar = false } = {}){
     fases.push(String(f.nombre || `Fase ${fi + 1}`));
     f.pasos.forEach(p => nuevos.push({ p, fase: base + fi }));
   });
-  const minIA = (p) => Math.min(90, Math.max(2, Number(p.minutos) || 10));
+  const minIA = (p) => Math.min(240, Math.max(2, Number(p.minutos) || 20));
   const suma = nuevos.reduce((s, x) => s + minIA(x.p), 0);
   const escala = suma ? data.horasEstimadas * 60 / suma : 1;
   nuevos.forEach(({ p, fase }) => pasos.push({

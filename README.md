@@ -3,7 +3,7 @@
 Subes los documentos de un trabajo (PDF, Word o TXT), su fecha de entrega y tus instrucciones. La IA (Google Gemini) lo analiza y calcula:
 
 - **Horas estimadas** y **dificultad / carga mental** (1–5)
-- Una **guía de micro metas** de 5–25 minutos, ordenadas en fases, adaptadas a tus instrucciones y fuentes
+- Una **guía de tareas por ejercicios** (un paso por ejercicio, o por apartado si no hay ejercicios), ordenadas en fases y adaptadas a tus instrucciones y fuentes
 
 Con esos datos la app ordena tus trabajos por **prioridad**, reparte el trabajo de cada día y te guía paso a paso.
 
