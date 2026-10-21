@@ -38,6 +38,7 @@ button.mini.on{background:var(--accent);color:var(--card);border-color:var(--acc
 button:disabled{opacity:.5;cursor:wait}
 .row{display:flex;gap:10px;flex-wrap:wrap}
 .row>*{flex:1;min-width:140px}
+.row.tres>*{min-width:86px;padding-left:6px;padding-right:6px;white-space:nowrap;font-size:14px}
 .muted{color:var(--muted);font-size:13px}
 .tarea{display:flex;gap:12px;align-items:center;cursor:pointer;transition:transform .1s;border-left:5px solid var(--c,var(--line))}
 .tarea:active{transform:scale(.99)}
@@ -59,6 +60,10 @@ button:disabled{opacity:.5;cursor:wait}
 .paso .detalle{font-size:13px;color:var(--muted)}
 .paso .meta-paso{font-size:12px;color:var(--muted);margin-top:3px}
 .acciones-paso{display:flex;gap:6px;flex:none}
+@media (max-width:480px){
+  .acciones-paso{display:grid;grid-template-columns:auto auto;justify-content:end}
+  .acciones-paso [data-empezar]{grid-column:1/-1}   /* ▶ arriba; ❓ y 💡 juntos debajo */
+}
 .foco{text-align:center;padding:28px 16px}
 .foco .accion{font-family:Fraunces,serif;font-size:22px;margin:10px 0}
 .empty{text-align:center;padding:40px 10px;color:var(--muted)}
@@ -80,7 +85,11 @@ button:disabled{opacity:.5;cursor:wait}
 .cambios{background:var(--accent-soft);border-radius:10px;padding:8px 12px;font-size:13px;margin-top:10px}
 /* Chat de dudas */
 .fondo{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:10}
-#fondoDuda{z-index:30}
+#fondoDuda,#fondoSol{z-index:30}
+.solucion{white-space:pre-wrap;word-wrap:break-word;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px;margin:8px 0;font-size:15px;line-height:1.6}
+.solucion:empty{display:none}
+.solucion .porque{display:block;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+button.mini.tiene{border-color:var(--accent);color:var(--ink)}
 .hoja{background:var(--card);width:100%;max-width:820px;height:88vh;border-radius:18px 18px 0 0;display:flex;flex-direction:column;padding:16px}
 .hoja-cab{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px}
 .hoja-cab .t{flex:1;font-weight:600}
@@ -244,7 +253,25 @@ body.con-barra .toast{bottom:84px}
     </div>
     <div class="row" style="margin-top:10px">
       <button class="mini" id="btnDudaFoco">❓ Tengo una duda</button>
-      <button class="mini" id="btnDetener">■ Parar sin terminar</button>
+      <button class="mini" id="btnSolFoco">💡 Ver resuelta</button>
+    </div>
+    <button class="mini" id="btnDetener" style="width:100%;margin-top:10px">■ Parar sin terminar</button>
+  </div>
+</div>
+
+<!-- Tarea resuelta -->
+<div id="fondoSol" class="fondo hidden">
+  <div class="hoja">
+    <div class="hoja-cab">
+      <div class="t"><span class="muted" style="font-weight:500">💡 Resuelta</span><br><span id="solTitulo"></span></div>
+      <button class="mini" id="btnCerrarSol">Cerrar</button>
+    </div>
+    <div class="muted" id="solInfo"></div>
+    <div class="msgs"><div class="solucion" id="solTexto"></div></div>
+    <div class="row tres" style="padding-top:8px">
+      <button class="ghost" id="btnRegenerarSol">↻ Otra versión</button>
+      <button class="ghost" id="btnCopiarSol">📋 Copiar</button>
+      <button class="ghost" id="btnDudaSol">❓ Preguntar</button>
     </div>
   </div>
 </div>
@@ -741,6 +768,7 @@ function filaPaso(t, i, actual){
       <div class="acciones-paso">
         ${p.hecho ? "" : `<button class="mini ${enMarcha ? "on" : ""}" data-t="${t.id}" data-empezar="${i}" aria-label="${enMarcha ? "Ver temporizador" : "Empezar"}">${enMarcha ? "⏱" : "▶"}</button>`}
         <button class="mini" data-t="${t.id}" data-duda="${i}" aria-label="Duda">❓${p.chat?.length ? " " + Math.ceil(p.chat.length/2) : ""}</button>
+        <button class="mini ${p.solucion ? "tiene" : ""}" data-t="${t.id}" data-sol="${i}" aria-label="Ver resuelta" title="Ver resuelta">💡</button>
       </div>
     </div>`;
 }
@@ -748,6 +776,7 @@ function cablear(cont){
   cont.querySelectorAll("input[type=checkbox][data-t]").forEach(cb => cb.onchange = () => marcarPaso(porId(cb.dataset.t), Number(cb.dataset.i), cb.checked));
   cont.querySelectorAll("[data-empezar]").forEach(b => b.onclick = (e) => { e.stopPropagation(); empezar(porId(b.dataset.t), Number(b.dataset.empezar)); });
   cont.querySelectorAll("[data-duda]").forEach(b => b.onclick = (e) => { e.stopPropagation(); actualId = b.dataset.t; abrirDuda(Number(b.dataset.duda)); });
+  cont.querySelectorAll("[data-sol]").forEach(b => b.onclick = (e) => { e.stopPropagation(); abrirSolucion(porId(b.dataset.t), Number(b.dataset.sol)); });
   cont.querySelectorAll("[data-abrir]").forEach(h => h.onclick = () => abrir(h.dataset.abrir));
 }
 
@@ -1051,8 +1080,9 @@ function pintarDetalle(){
       <div class="muted">${esc(sig.detalle)}</div>
       ${sig.fuente ? `<div class="muted" style="margin-top:4px">📚 ${esc(sig.fuente)}</div>` : ""}
       <button id="btnEmpezar" style="width:100%;margin-top:16px">${enMarcha ? "⏱ Ver temporizador" : (sig.segundos ? "▶ Seguir" : "▶ Empezar")}</button>
-      <div class="row" style="margin-top:10px">
-        <button class="ghost" data-t="${t.id}" data-duda="${idxActual}">❓ Tengo una duda</button>
+      <div class="row tres" style="margin-top:10px">
+        <button class="ghost" data-t="${t.id}" data-duda="${idxActual}">❓ Duda</button>
+        <button class="ghost" data-t="${t.id}" data-sol="${idxActual}">💡 Resuelta</button>
         <button class="ghost" id="btnHecho">✓ Hecho</button>
       </div>
     </div>`;
@@ -1159,7 +1189,9 @@ async function adaptarGuia(t, btn){
   if (!t.docs.some(d => d.rol === "enunciado")) return aviso("Este trabajo no tiene enunciado: añade un documento y márcalo como «Enunciado».");
   const hechos = t.pasos.filter(p => p.hecho);
   const pierdeChats = t.pasos.some(p => !p.hecho && p.chat?.length);
-  if (!confirm(`La IA rehará las micro metas pendientes con tus instrucciones y documentos.${hechos.length ? ` Se conservan las ${hechos.length} ya hechas.` : ""}${pierdeChats ? " Se perderán las dudas de las pendientes." : ""} ¿Continuar?`)) return;
+  const pierdeSol = t.pasos.some(p => !p.hecho && p.solucion);
+  const pierde = [pierdeChats && "las dudas", pierdeSol && "las resoluciones"].filter(Boolean).join(" y ");
+  if (!confirm(`La IA rehará las micro metas pendientes con tus instrucciones y documentos.${hechos.length ? ` Se conservan las ${hechos.length} ya hechas.` : ""}${pierde ? ` Se perderán ${pierde} de las pendientes.` : ""} ¿Continuar?`)) return;
   if (sesion?.tid === t.id) detenerSesion();
   const textoBtn = btn.textContent;
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Adaptando…';
@@ -1221,8 +1253,13 @@ function abrirFoco(){ $("fondoFoco").classList.remove("hidden"); document.body.s
 function cerrarFoco(){
   if ($("fondoFoco").classList.contains("hidden")) return;
   $("fondoFoco").classList.add("hidden");
-  if ($("fondoDuda").classList.contains("hidden")) document.body.style.overflow = "";
+  ajustarScroll();
   tick();
+}
+// Bloquea el scroll de la página mientras haya alguna ventana abierta
+function ajustarScroll(){
+  const abierta = ["fondoFoco", "fondoDuda", "fondoSol"].some(id => !$(id).classList.contains("hidden"));
+  document.body.style.overflow = abierta ? "hidden" : "";
 }
 $("btnMinFoco").onclick = () => { cerrarFoco(); repintar(); };
 $("fondoFoco").onclick = (e) => { if (e.target === $("fondoFoco")){ cerrarFoco(); repintar(); } };
@@ -1237,6 +1274,7 @@ $("btnDetener").onclick = () => {
   repintar();
 };
 $("btnDudaFoco").onclick = () => { const x = pasoDeSesion(); if (x){ actualId = x.t.id; abrirDuda(x.i); } };
+$("btnSolFoco").onclick = () => { const x = pasoDeSesion(); if (x) abrirSolucion(x.t, x.i); };
 
 const VUELTA = 2 * Math.PI * 52;
 function tick(){
@@ -1309,11 +1347,11 @@ function abrirDuda(i){
   $("dudaTitulo").textContent = p.accion;
   pintarChat();
   $("fondoDuda").classList.remove("hidden");
-  document.body.style.overflow = "hidden";
+  ajustarScroll();
 }
 function cerrarDuda(){
   $("fondoDuda").classList.add("hidden");
-  if ($("fondoFoco").classList.contains("hidden")) document.body.style.overflow = "";
+  ajustarScroll();
   repintar();
 }
 function pintarChat(cargando, parcial){
@@ -1357,6 +1395,112 @@ $("btnCerrarDuda").onclick = cerrarDuda;
 $("fondoDuda").onclick = (e) => { if (e.target === $("fondoDuda")) cerrarDuda(); };
 $("btnEnviarDuda").onclick = () => enviarDuda($("dudaInput").value);
 $("btnDetallar").onclick = () => enviarDuda("Explícame esta micro meta dividida en sub-pasos más pequeños y detallados.");
+
+// ---------- Tarea resuelta ----------
+// La IA resuelve la micro meta usando SOLO las instrucciones, documentos y resoluciones anteriores de ese trabajo.
+const MAX_SOLUCION = 15000;
+let solRef = null;                  // { tid, pid } de la ventana abierta
+const resolviendo = new Map();      // pid → { texto, estado } mientras la IA escribe
+const sinGuardar = new Map();       // pid → resolución que no cupo en el navegador
+function solActual(){
+  const t = solRef && porId(solRef.tid);
+  const i = t ? t.pasos.findIndex(p => p.id === solRef.pid) : -1;
+  return i >= 0 ? { t, i, p: t.pasos[i] } : null;
+}
+const textoSolucion = (p) => p.solucion || sinGuardar.get(p.id) || "";
+function abrirSolucion(t, i){
+  const p = t?.pasos[i];
+  if (!p) return;
+  solRef = { tid: t.id, pid: p.id };
+  $("fondoSol").classList.remove("hidden");
+  ajustarScroll();
+  if (!textoSolucion(p) && !resolviendo.has(p.id)) resolver(t, p);
+  pintarSolucion();
+}
+function cerrarSolucion(sinRepintar){
+  $("fondoSol").classList.add("hidden");
+  solRef = null;
+  ajustarScroll();
+  if (!sinRepintar) repintar();
+}
+// Separa la línea final «Por qué: …» para mostrarla aparte
+function formatearSolucion(txt){
+  const m = txt.match(/\n\s*(Por qué:[\s\S]*)$/i);
+  if (!m) return esc(txt);
+  return esc(txt.slice(0, m.index).trimEnd()) + `<span class="porque">${esc(m[1].trim())}</span>`;
+}
+function pintarSolucion(){
+  const x = solActual();
+  if (!x) return;
+  const { p } = x, enCurso = resolviendo.get(p.id), guardada = textoSolucion(p);
+  $("solTitulo").textContent = p.accion;
+  if (enCurso){
+    $("solInfo").textContent = guardada ? "Creando otra versión…" : "";
+    $("solTexto").innerHTML = enCurso.texto ? formatearSolucion(enCurso.texto)
+      : `<span class="spinner"></span>${esc(enCurso.estado || "Resolviendo con los documentos de este trabajo…")}`;
+  } else {
+    $("solInfo").textContent = guardada ? `🔒 Hecha solo con las instrucciones y documentos de este trabajo${p.solucionEn ? " · " + fechaCorta(p.solucionEn) : ""}${sinGuardar.has(p.id) ? " · ⚠️ no cabe en el navegador, se perderá al cerrar" : ""}` : "";
+    $("solTexto").innerHTML = formatearSolucion(guardada);
+  }
+  $("btnRegenerarSol").disabled = !!enCurso;
+  $("btnCopiarSol").disabled = !!enCurso || !guardada;
+}
+async function resolver(t, p){
+  resolviendo.set(p.id, { texto: "", estado: "" });
+  pintarSolucion();
+  const idx = t.pasos.findIndex(x => x.id === p.id);
+  const anteriores = t.pasos.slice(0, idx).filter(x => x.solucion).map(x => ({ accion: x.accion, solucion: x.solucion.slice(0, 3000) }));
+  try {
+    const texto = (await llamarEnDirecto("/api/resolver", {
+      trabajo: { titulo: t.titulo, asignatura: t.asignatura, resumen: t.resumen },
+      paso: { accion: p.accion, detalle: p.detalle, fuente: p.fuente || "", tipo: p.tipo || "" },
+      ...contextoIA(t), anteriores
+    }, (txt, estado) => {
+      resolviendo.set(p.id, { texto: txt, estado: estado || resolviendo.get(p.id)?.estado });
+      if (solRef?.pid === p.id) pintarSolucion();
+    })).trim();
+    if (!texto) throw new Error("La IA no devolvió la resolución. Inténtalo de nuevo.");
+    // Mientras escribía, el trabajo pudo borrarse o adaptarse: se busca el paso por su id
+    const vivo = porId(t.id)?.pasos.find(x => x.id === p.id);
+    if (vivo){
+      const antes = [vivo.solucion, vivo.solucionEn];
+      vivo.solucion = texto.slice(0, MAX_SOLUCION); vivo.solucionEn = hoyISO();
+      if (guardar()) sinGuardar.delete(p.id);
+      else { [vivo.solucion, vivo.solucionEn] = antes; if (!antes[0]) delete vivo.solucion; sinGuardar.set(p.id, texto); }
+      document.querySelectorAll(`[data-t="${t.id}"][data-sol]`).forEach(b => {
+        if (porId(t.id).pasos[Number(b.dataset.sol)]?.id === p.id) b.classList.add("tiene");
+      });
+    }
+  } catch (e){
+    aviso(e.message);
+  } finally {
+    resolviendo.delete(p.id);
+    if (solRef?.pid === p.id){
+      const x = solActual();
+      if (x && !textoSolucion(x.p)) cerrarSolucion(true); else pintarSolucion();
+    }
+  }
+}
+$("btnCerrarSol").onclick = () => cerrarSolucion();
+$("fondoSol").onclick = (e) => { if (e.target === $("fondoSol")) cerrarSolucion(); };
+$("btnRegenerarSol").onclick = () => { const x = solActual(); if (x && !resolviendo.has(x.p.id)) resolver(x.t, x.p); };
+$("btnCopiarSol").onclick = async () => {
+  const x = solActual(), txt = x && textoSolucion(x.p);
+  if (!txt) return;
+  try { await navigator.clipboard.writeText(txt); aviso("Copiado"); }
+  catch {
+    const ta = document.createElement("textarea");
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); aviso("Copiado"); } catch { aviso("No se pudo copiar"); }
+    ta.remove();
+  }
+};
+$("btnDudaSol").onclick = () => {
+  const x = solActual();
+  if (!x) return;
+  cerrarSolucion(true);
+  actualId = x.t.id; abrirDuda(x.i);
+};
 
 // ---------- Inicio ----------
 { const r = cargar(); trabajos = r.lista; if (r.cambios) guardar(); }
