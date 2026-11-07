@@ -158,12 +158,35 @@ body.con-barra .toast{bottom:84px}
 .barra-foco .nombre{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
 .barra-foco .num{font-weight:600;font-variant-numeric:tabular-nums}
 .barra-foco button.mini{color:var(--bg);border-color:rgba(127,127,127,.5)}
+/* Cuenta y sincronización */
+.cab-acciones{display:flex;align-items:center;gap:8px;flex:none}
+button.cuenta{display:inline-flex;align-items:center;gap:5px;padding:7px 10px;font-size:15px;line-height:1}
+.marca-sync{font-size:12px;font-weight:700;color:var(--accent)}
+.marca-sync.pendiente,.marca-sync.sinconexion{color:var(--p2)}
+.marca-sync.error{color:var(--p1)}
+.marca-sync.sincronizando{display:inline-block;animation:g 1s linear infinite}
+.txt-cuenta{font-size:13px;font-weight:500}
+@media (max-width:480px){.txt-cuenta{display:none}}
+#fondoCuenta{z-index:35}
+.panel-cuenta{background:var(--card);width:100%;max-width:420px;border-radius:20px;padding:18px 20px 20px;max-height:94vh;overflow:auto}
+.panel-cuenta input{font-size:16px}   /* en iPhone, con menos de 16 px la página hace zoom al escribir */
+.email-cuenta{font-weight:600;font-size:16px;overflow-wrap:anywhere}
+.estado-cuenta{background:var(--accent-soft);border-radius:10px;padding:8px 12px;font-size:14px;margin:12px 0 4px}
+.estado-cuenta.error{background:#fbe9e5;color:#8a2a1a}
+@media (prefers-color-scheme: dark){.estado-cuenta.error{background:#3a1f19;color:#f2b8aa}}
+.msg-cuenta{font-size:14px;margin-top:10px}
+.msg-cuenta:empty,.enlaces-cuenta:empty{display:none}
+.msg-cuenta.error{color:var(--p1)}
+.enlaces-cuenta{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:14px}
 </style>
 </head>
 <body>
 <header>
   <h1>Mis trabajos</h1>
-  <button id="btnNuevo">+ Nuevo</button>
+  <div class="cab-acciones">
+    <button class="mini cuenta" id="btnCuenta" aria-label="Iniciar sesión">☁️</button>
+    <button id="btnNuevo">+ Nuevo</button>
+  </div>
 </header>
 
 <main>
@@ -280,9 +303,263 @@ body.con-barra .toast{bottom:84px}
   <button class="mini" id="btnBarraPausa" aria-label="Pausar o seguir">⏸️</button>
 </div>
 
+<!-- Cuenta -->
+<div id="fondoCuenta" class="fondo centro hidden">
+  <div class="panel-cuenta" role="dialog" aria-modal="true" aria-labelledby="cuentaTitulo">
+    <div class="hoja-cab" style="align-items:center">
+      <h2 class="t" id="cuentaTitulo" style="margin:0">Tu cuenta</h2>
+      <button class="mini" id="btnCerrarCuenta">Cerrar</button>
+    </div>
+    <div id="cuentaCuerpo"></div>
+  </div>
+</div>
+
 <input type="file" id="inputDocs" accept=".pdf,.docx,.txt,.md" multiple class="hidden">
 <input type="file" id="inputDocsDet" accept=".pdf,.docx,.txt,.md" multiple class="hidden">
 
+<script id="motor-sync">
+// ---------- Motor de sincronización (sin interfaz: también se prueba fuera del navegador) ----------
+// Cada dato es una fila en la nube (clave → valor) con un número de versión (rev) que sube en cada
+// cambio. Este dispositivo recuerda la última versión acordada de cada clave (la «base», en
+// IndexedDB): así sabe qué ha cambiado aquí y qué en la nube, y si han cambiado los dos, fusiona
+// campo a campo. Al subir manda la versión que conoce: si otro dispositivo se ha adelantado, la nube
+// rechaza el cambio y se repite (bajar, fusionar, subir). Así nunca se pisa lo que hizo el otro.
+const MotorSync = (() => {
+  const esObj = (x) => x !== null && typeof x === "object" && !Array.isArray(x);
+  const propia = (o, k) => Object.prototype.hasOwnProperty.call(o, k) ? o[k] : undefined;
+  // JSON con las claves ordenadas: Postgres no conserva el orden de las claves de un objeto
+  const estable = (v) => v === undefined ? undefined
+    : JSON.stringify(v, (k, x) => esObj(x) ? Object.fromEntries(Object.keys(x).sort().map(c => [c, x[c]])) : x);
+  // Listas cuyos elementos tienen id (pasos, documentos…) o pid (registros del ritmo)
+  const claveDe = (x) => !esObj(x) ? null : typeof x.id === "string" ? "i" + x.id : typeof x.pid === "string" ? "p" + x.pid : null;
+  function conClaves(a){
+    if (!Array.isArray(a)) return false;
+    const vistas = new Set();
+    return a.every(x => { const k = claveDe(x); if (k === null || vistas.has(k)) return false; vistas.add(k); return true; });
+  }
+  // Fusión a 3 vías. b = última versión acordada, l = este dispositivo, r = la nube (undefined = no existe)
+  function fusionar(b, l, r, ganaRemoto){
+    const tl = estable(l), tr = estable(r);
+    if (tl === tr) return l;
+    const tb = estable(b);
+    if (tr === tb) return l;          // solo ha cambiado aquí
+    if (tl === tb) return r;          // solo ha cambiado en la nube
+    if (l === undefined) return r;    // borrado en un lado y cambiado en el otro: se conserva el cambio
+    if (r === undefined) return l;
+    if (esObj(l) && esObj(r)){
+      const bo = esObj(b) ? b : {}, res = {};
+      for (const k of new Set([...Object.keys(l), ...Object.keys(r)])){
+        const v = fusionar(propia(bo, k), propia(l, k), propia(r, k), ganaRemoto);
+        if (v !== undefined) res[k] = v;
+      }
+      return res;
+    }
+    if (conClaves(l) && conClaves(r) && (b === undefined || conClaves(b))) return fusionarLista(b || [], l, r, ganaRemoto);
+    return ganaRemoto ? r : l;        // el mismo dato, cambiado distinto en los dos lados
+  }
+  function fusionarLista(b, l, r, ganaRemoto){
+    const mapa = (a) => new Map(a.map(x => [claveDe(x), x]));
+    const mb = mapa(b), ml = mapa(l), mr = mapa(r);
+    const orden = l.map(claveDe);     // el orden de aquí; lo nuevo de la nube va detrás de su anterior
+    r.forEach((x, i) => {
+      const k = claveDe(x);
+      if (!ml.has(k)) orden.splice(i ? orden.indexOf(claveDe(r[i - 1])) + 1 : 0, 0, k);
+    });
+    const res = [];
+    for (const k of orden){ const v = fusionar(mb.get(k), ml.get(k), mr.get(k), ganaRemoto); if (v !== undefined) res.push(v); }
+    return res;
+  }
+  // Lo que se sube, sin caracteres que el JSON de Postgres no admite
+  const paraSubir = (v) => JSON.parse(JSON.stringify(v, (k, x) => {
+    if (typeof x !== "string") return x;
+    if (x.includes("\u0000")) x = x.replace(/\u0000/g, "");
+    return typeof x.toWellFormed === "function" ? x.toWellFormed() : x;
+  }));
+
+  // Base: la última versión acordada de cada clave. En IndexedDB (no ocupa el espacio de los
+  // trabajos); si no está disponible, en memoria.
+  function crearBase(nombre){
+    let memoria = null, abriendo = null;
+    const abrir = () => abriendo ||= new Promise((ok) => {
+      const aMemoria = () => { memoria ||= new Map(); ok(null); };
+      try {
+        if (typeof indexedDB === "undefined") return aMemoria();
+        const r = indexedDB.open(nombre, 1);
+        r.onupgradeneeded = () => r.result.createObjectStore("base");
+        r.onsuccess = () => { const db = r.result; db.onversionchange = () => { db.close(); abriendo = null; }; ok(db); };
+        r.onerror = aMemoria;
+      } catch { aMemoria(); }
+    });
+    const operar = async (modo, fn) => {
+      const db = await abrir();
+      if (!db) return fn(null);
+      return new Promise((ok, mal) => {
+        let t;
+        try { t = db.transaction("base", modo); } catch (e){ abriendo = null; return mal(e); }
+        const res = fn(t.objectStore("base"));
+        t.oncomplete = () => ok(res);
+        t.onerror = t.onabort = () => mal(t.error);
+      });
+    };
+    return {
+      todo: () => operar("readonly", (s) => {
+        const m = new Map();
+        if (!s){ memoria.forEach((v, k) => m.set(k, v)); return m; }
+        const c = s.openCursor();
+        c.onsuccess = () => { const x = c.result; if (x){ m.set(x.key, x.value); x.continue(); } };
+        return m;
+      }),
+      guardar: (cambios) => !cambios.length ? Promise.resolve() : operar("readwrite", (s) => cambios.forEach(c => {
+        if (c.borrar){ if (s) s.delete(c.clave); else memoria.delete(c.clave); }
+        else { const v = { rev: c.rev, texto: c.texto }; if (s) s.put(v, c.clave); else memoria.set(c.clave, v); }
+      })),
+      vaciar: () => operar("readwrite", (s) => { if (s) s.clear(); else memoria.clear(); }),
+    };
+  }
+
+  const sinRed = (e) => /failed to fetch|networkerror|load failed|network request failed/i.test(String(e?.message || e))
+    || (typeof navigator !== "undefined" && navigator.onLine === false);
+
+  // op: { cliente (Supabase), tabla, uid, base, leer() → Map, escribir(Map) → bool, ocupado(), alEstado(e) }
+  function crear(op){
+    const { cliente, tabla, base } = op;
+    let uid = op.uid, enCurso = null, otraVez = false;
+    let tCambio = null, tReintento = null, primerCambio = 0;
+    let marca = 1, marcaOk = 0, ultimoOk = 0;   // marca: cambios hechos aquí · marcaOk: hasta dónde está subido
+    const avisar = (e) => { try { op.alEstado?.(e); } catch {} };
+    const conCandado = (fn) => globalThis.navigator?.locks?.request ? navigator.locks.request("mis-trabajos-sync", fn) : fn();
+    async function filas(yo, cols, claves){
+      let q = cliente.from(tabla).select(cols).eq("usuario", yo);
+      if (claves) q = q.in("clave", claves);
+      const { data, error } = await q;
+      if (error) throw error;
+      if (data.length >= 1000) throw new Error("Hay demasiados datos para sincronizar.");
+      return data;
+    }
+    async function subirUna(s, yo){
+      const q = cliente.from(tabla);
+      if (s.valor === undefined){
+        const { data, error } = await q.delete().eq("usuario", yo).eq("clave", s.clave).eq("rev", s.rev).select("clave");
+        if (error) throw error;
+        return data?.length ? { clave: s.clave, borrar: true } : null;
+      }
+      const valor = paraSubir(s.valor);
+      const { data, error } = s.rev === undefined
+        ? await q.insert({ usuario: yo, clave: s.clave, valor }).select("rev")
+        : await q.update({ valor }).eq("usuario", yo).eq("clave", s.clave).eq("rev", s.rev).select("rev");
+      if (error){ if (error.code === "23505") return null; throw error; }
+      return data?.length ? { clave: s.clave, rev: data[0].rev, texto: s.texto } : null;   // null = otro dispositivo se adelantó
+    }
+    // Una pasada: bajar lo cambiado, fusionar, guardarlo aquí y subir lo que falte.
+    // true = todo al día · false = repetir (algo cambió justo ahora) · "ocupado" = probar en un rato
+    async function pasada(m0){
+      const yo = uid;
+      if (op.ocupado?.()) return "ocupado";
+      const previa = await base.todo();
+      const primeraVez = previa.size === 0;
+      const remRev = new Map(), remVal = new Map();
+      if (primeraVez){
+        for (const f of await filas(yo, "clave, rev, valor")){ remRev.set(f.clave, f.rev); remVal.set(f.clave, f.valor); }
+      } else {
+        for (const f of await filas(yo, "clave, rev")) remRev.set(f.clave, f.rev);
+        if (m0 === marcaOk && remRev.size === previa.size && [...remRev].every(([k, rev]) => previa.get(k)?.rev === rev)) return true;   // nada nuevo
+        const bajar = [...remRev].filter(([k, rev]) => previa.get(k)?.rev !== rev).map(([k]) => k);
+        for (let i = 0; i < bajar.length; i += 40)
+          for (const f of await filas(yo, "clave, rev, valor", bajar.slice(i, i + 40))){ remRev.set(f.clave, f.rev); remVal.set(f.clave, f.valor); }
+        for (const k of bajar) if (!remVal.has(k)) remRev.delete(k);   // se borró entre las dos consultas
+      }
+      if (yo !== uid) return true;
+      const local = op.leer();
+      const aqui = new Map(), subir = [], nuevaBase = [];
+      for (const k of new Set([...local.keys(), ...previa.keys(), ...remRev.keys()])){
+        const b = previa.get(k), lv = local.get(k), tl = estable(lv), rr = remRev.get(k);
+        const cambioAqui = tl !== b?.texto, cambioAlla = rr !== b?.rev;
+        if (!cambioAqui && !cambioAlla) continue;
+        const bv = b ? JSON.parse(b.texto) : undefined;
+        const rv = !cambioAlla ? bv : rr === undefined ? undefined : remVal.get(k);
+        const fin = !cambioAlla ? lv : !cambioAqui ? rv : fusionar(bv, lv, rv, primeraVez);
+        const tf = estable(fin);
+        if (tf !== tl) aqui.set(k, fin);
+        if (tf !== estable(rv)) subir.push({ clave: k, valor: fin, rev: rr, texto: tf });
+        else nuevaBase.push(tf === undefined ? { clave: k, borrar: true } : { clave: k, rev: rr, texto: tf });
+      }
+      if (aqui.size){
+        if (op.ocupado?.()) return "ocupado";
+        const ahora = op.leer();   // si mientras tanto se ha tocado algo de lo que llega, se repite la pasada
+        for (const k of aqui.keys()) if (estable(ahora.get(k)) !== estable(local.get(k))) return false;
+        if (yo !== uid) return true;
+        if (!op.escribir(aqui)) throw Object.assign(new Error("No queda espacio en este navegador para guardar lo que llega de tu cuenta. Quita algún documento o trabajo."), { code: "sin-espacio" });
+      }
+      let alDia = true, fallo = null;
+      for (let i = 0; i < subir.length && !fallo; i += 6){
+        const res = await Promise.allSettled(subir.slice(i, i + 6).map(s => subirUna(s, yo)));
+        for (const x of res){
+          if (x.status === "rejected") fallo ||= x.reason;
+          else if (x.value) nuevaBase.push(x.value);
+          else alDia = false;
+        }
+      }
+      if (yo === uid) await base.guardar(nuevaBase);
+      if (fallo) throw fallo;
+      return alDia;
+    }
+    function reintentar(ms){
+      if (!uid) return;
+      clearTimeout(tReintento);
+      tReintento = setTimeout(() => { tReintento = null; sincronizar(); }, ms);
+    }
+    function sincronizar(){
+      if (!uid) return Promise.resolve();
+      if (enCurso){ otraVez = true; return enCurso; }
+      clearTimeout(tReintento); tReintento = null;
+      enCurso = (async () => {
+        do {
+          otraVez = false;
+          const m0 = marca;
+          avisar({ estado: "sincronizando" });
+          let r;
+          try {
+            let n = 0;
+            do r = await conCandado(() => pasada(m0)); while (r === false && ++n < 4 && uid);
+          } catch (e){
+            if (!uid) return;
+            const red = sinRed(e);
+            avisar({ estado: red ? "sinconexion" : "error", error: e });
+            reintentar(red ? 20000 : 60000);
+            return;
+          }
+          if (!uid) return;
+          if (r === true){
+            marcaOk = m0; ultimoOk = Date.now();
+            avisar(marca === marcaOk ? { estado: "ok", hora: ultimoOk } : { estado: "pendiente" });
+          } else {
+            avisar({ estado: "pendiente" });
+            reintentar(r === "ocupado" ? 3000 : 5000);
+          }
+        } while (otraVez && uid);
+      })().finally(() => { enCurso = null; });
+      return enCurso;
+    }
+    // Un cambio aquí: se sube 1,5 s después del último (y como mucho 8 s después del primero)
+    function cambio(){
+      marca++;
+      if (!uid) return;
+      avisar({ estado: "pendiente" });
+      const ahora = Date.now();
+      primerCambio ||= ahora;
+      clearTimeout(tCambio);
+      tCambio = setTimeout(() => { tCambio = null; primerCambio = 0; sincronizar(); }, Math.max(0, Math.min(1500, primerCambio + 8000 - ahora)));
+    }
+    return {
+      sincronizar, cambio,
+      ya(){ clearTimeout(tCambio); tCambio = null; primerCambio = 0; return sincronizar(); },
+      hayPendientes: () => !!uid && (marca !== marcaOk || !!tCambio),
+      parar(){ uid = null; clearTimeout(tCambio); clearTimeout(tReintento); tCambio = tReintento = null; },
+    };
+  }
+  return { crear, crearBase, fusionar, estable };
+})();
+</script>
 <script>
 if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
@@ -291,6 +568,13 @@ const uuid = () => (window.crypto?.randomUUID ? crypto.randomUUID() : Date.now()
 const CLAVE = "trabajos-v1";
 const CLAVE_RITMO = "ritmo-v1";
 const CLAVE_SESION = "temporizador-v1";
+// ---------- Cuenta (Supabase) ----------
+// Datos públicos de tu proyecto de Supabase: Project Settings → API Keys (pasos en el README).
+// La clave «publishable» está hecha para ir en la web: lo que protege tus datos son las reglas de
+// supabase/esquema.sql (cada cuenta solo ve lo suyo). Vacíos = sin cuenta, todo en este navegador.
+const SUPABASE_URL = "";      // p. ej. "https://abcdefghijkl.supabase.co"
+const SUPABASE_CLAVE = "";    // p. ej. "sb_publishable_..."
+const TABLA_SYNC = "datos_app";
 const MAX_DOC = 25000;            // caracteres guardados por documento
 const MAX_ENUNCIADO_IA = 30000;   // caracteres de enunciado que se mandan a la IA (en total)
 const MAX_FUENTES_IA = 40000;     // caracteres de fuentes que se mandan a la IA (en total)
@@ -313,6 +597,13 @@ let trabajos = [];
 let registros = [];   // aprendizaje del ritmo: solo números, nunca contenido
 let sesion = null;    // temporizador en marcha
 let horasDia = Number(localStorage.getItem("horasDia")) || 3;
+let sb = null;                         // cliente de Supabase
+let motorSync = null;                  // sincronización en marcha (con sesión iniciada)
+let usuarioCuenta = null;              // usuario con sesión iniciada
+let estadoSync = { estado: "fuera" };
+let modoCuenta = "entrar";             // pantalla de la cuenta: entrar · crear · olvido · nueva
+let errorCargaSb = false;
+let iaEnCurso = 0;                     // llamadas a la IA en marcha: mientras, no se aplica lo que llega de la nube
 
 // ---------- Guardado y migración de datos antiguos ----------
 function cargar(){
@@ -327,6 +618,7 @@ function cargar(){
 // Versión anterior: un solo enunciado (contenido) + fuentes + notas. Ahora: documentos con rol + instrucciones.
 function migrar(t, usados){
   let c = false;
+  if (!t.id){ t.id = uuid(); c = true; }
   if (!Array.isArray(t.docs)){
     t.docs = [];
     if (t.contenido) t.docs.push({ id: uuid(), nombre: t.archivo || "Enunciado", rol: "enunciado", texto: String(t.contenido) });
@@ -347,15 +639,16 @@ function migrar(t, usados){
   return c;
 }
 function guardar(){
-  try { localStorage.setItem(CLAVE, JSON.stringify(trabajos)); return true; }
+  try { localStorage.setItem(CLAVE, JSON.stringify(trabajos)); avisarCambio(); return true; }
   catch {
     aviso("No queda espacio en el navegador. Quita algún documento o trabajo.");
     return false;
   }
 }
 let temporizadorGuardado = null;
-function guardarPronto(){ clearTimeout(temporizadorGuardado); temporizadorGuardado = setTimeout(guardar, 400); }
-window.addEventListener("pagehide", () => { if (temporizadorGuardado){ clearTimeout(temporizadorGuardado); guardar(); } });
+function guardarPronto(){ clearTimeout(temporizadorGuardado); temporizadorGuardado = setTimeout(() => { temporizadorGuardado = null; guardar(); }, 400); }
+function vaciarGuardadoPendiente(){ if (temporizadorGuardado){ clearTimeout(temporizadorGuardado); temporizadorGuardado = null; guardar(); } }
+window.addEventListener("pagehide", vaciarGuardadoPendiente);
 
 function aviso(txt){
   document.querySelectorAll(".toast").forEach(x => x.remove());
@@ -402,7 +695,7 @@ $("horasDia").onchange = (e) => {
   const nuevo = Math.max(0.5, Number(e.target.value) || 3);
   e.target.value = nuevo;
   if (nuevo === horasDia) return;   // sin cambios: no repintar (si no, se pierde el toque que quitó el foco)
-  horasDia = nuevo; localStorage.setItem("horasDia", horasDia); repintar();
+  horasDia = nuevo; localStorage.setItem("horasDia", horasDia); avisarCambio(); repintar();
 };
 
 // ---------- Lectura de archivos ----------
@@ -427,7 +720,7 @@ async function leerArchivo(file){
   return await file.text();
 }
 async function leerTexto(file){
-  const txt = (await leerArchivo(file)).trim();
+  const txt = (await leerArchivo(file)).replace(/\u0000/g, "").trim();
   if (txt.length < 20) throw new Error("sin texto");
   return txt.slice(0, MAX_DOC);
 }
@@ -511,7 +804,13 @@ const hayCambios = (t) => t.firmaIA !== firmaContexto(t);
 // ---------- Llamadas a la IA ----------
 // Llamada en directo: la IA va enviando el texto poco a poco.
 // alAvanzar(textoHastaAhora, estado) se llama cada vez que llega algo nuevo.
+// Mientras la IA escribe, la sincronización espera (el resultado se guarda en el trabajo que había).
 async function llamarEnDirecto(url, datos, alAvanzar){
+  iaEnCurso++;
+  try { return await llamarIA(url, datos, alAvanzar); }
+  finally { setTimeout(() => { iaEnCurso--; }, 0); }   // después de que quien llamó guarde el resultado
+}
+async function llamarIA(url, datos, alAvanzar){
   const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos) });
   if (!res.ok || !res.body){
     const bruto = await res.text().catch(() => "");
@@ -633,7 +932,7 @@ const horasPendientes = (t) => minPendientes(t) / 60;
 
 // ---------- Aprendizaje del ritmo (temporizador) ----------
 function cargarRitmo(){ try { const r = JSON.parse(localStorage.getItem(CLAVE_RITMO)); return Array.isArray(r) ? r : []; } catch { return []; } }
-function guardarRitmo(){ try { localStorage.setItem(CLAVE_RITMO, JSON.stringify(registros)); } catch {} ritmoCache = null; }
+function guardarRitmo(){ try { localStorage.setItem(CLAVE_RITMO, JSON.stringify(registros)); avisarCambio(); } catch {} ritmoCache = null; }
 let ritmoCache = null;
 // Media geométrica de "tiempo real ÷ estimado", prudente cuando hay pocos datos.
 function ritmo(){
@@ -821,7 +1120,7 @@ function planDeHoy(forzar){
   try { plan = JSON.parse(localStorage.getItem("planHoy")); } catch {}
   if (forzar || !plan || plan.fecha !== hoyISO() || plan.horas !== horasDia || plan.firma !== firma()){
     plan = generarPlan();
-    try { localStorage.setItem("planHoy", JSON.stringify(plan)); } catch {}
+    try { localStorage.setItem("planHoy", JSON.stringify(plan)); avisarCambio(); } catch {}
   }
   return plan;
 }
@@ -1213,7 +1512,7 @@ async function adaptarGuia(t, btn){
 
 // ---------- Temporizador de concentración ----------
 function cargarSesion(){ try { return JSON.parse(localStorage.getItem(CLAVE_SESION)) || null; } catch { return null; } }
-function guardarSesion(){ try { sesion ? localStorage.setItem(CLAVE_SESION, JSON.stringify(sesion)) : localStorage.removeItem(CLAVE_SESION); } catch {} }
+function guardarSesion(){ try { sesion ? localStorage.setItem(CLAVE_SESION, JSON.stringify(sesion)) : localStorage.removeItem(CLAVE_SESION); avisarCambio(); } catch {} }
 const tiempoSesion = () => sesion ? sesion.acumulado + (sesion.inicio ? Date.now() - sesion.inicio : 0) : 0;
 function pasoDeSesion(){
   const t = sesion && porId(sesion.tid);
@@ -1258,7 +1557,7 @@ function cerrarFoco(){
 }
 // Bloquea el scroll de la página mientras haya alguna ventana abierta
 function ajustarScroll(){
-  const abierta = ["fondoFoco", "fondoDuda", "fondoSol"].some(id => !$(id).classList.contains("hidden"));
+  const abierta = ["fondoFoco", "fondoDuda", "fondoSol", "fondoCuenta"].some(id => !$(id).classList.contains("hidden"));
   document.body.style.overflow = abierta ? "hidden" : "";
 }
 $("btnMinFoco").onclick = () => { cerrarFoco(); repintar(); };
@@ -1502,6 +1801,415 @@ $("btnDudaSol").onclick = () => {
   actualId = x.t.id; abrirDuda(x.i);
 };
 
+// ---------- Cuenta y sincronización ----------
+// Con la sesión iniciada, cada cambio se guarda aquí (como siempre) y también en tu cuenta de Supabase,
+// para verlo en el ordenador y en el móvil. El navegador habla directamente con Supabase: no pasa por
+// funciones de Netlify, así que no gasta créditos. Sin sesión, todo funciona como antes.
+// Se sincroniza cada trabajo por separado ("t_<id>") y estos ajustes:
+const SYNC_SIMPLES = { ritmo: CLAVE_RITMO, horasDia: "horasDia", planHoy: "planHoy", temporizador: CLAVE_SESION };
+const CLAVE_CUENTA = "cuenta-v1";   // de qué cuenta son los datos guardados en este navegador
+const cuentaConfigurada = () => !!(SUPABASE_URL && SUPABASE_CLAVE);
+const urlApp = () => location.origin + location.pathname;
+const nombreBase = (uid) => "mis-trabajos-sync-" + uid;
+function leerDueno(){ try { return JSON.parse(localStorage.getItem(CLAVE_CUENTA)) || null; } catch { return null; } }
+function guardarDueno(u){ try { localStorage.setItem(CLAVE_CUENTA, JSON.stringify({ uid: u.id, email: u.email || "" })); } catch {} }
+function avisarCambio(){ motorSync?.cambio(); }
+
+// Lo guardado en este navegador, como claves para sincronizar
+function leerSync(){
+  vaciarGuardadoPendiente();
+  const m = new Map();
+  let lista = [];
+  try { lista = JSON.parse(localStorage.getItem(CLAVE)) || []; } catch {}
+  if (Array.isArray(lista)) for (const t of lista) if (t?.id) m.set("t_" + t.id, t);
+  for (const [k, ls] of Object.entries(SYNC_SIMPLES)){
+    const crudo = localStorage.getItem(ls);
+    if (crudo === null) continue;
+    let v;
+    if (k === "horasDia") v = Number(crudo) || undefined;
+    else try { v = JSON.parse(crudo); } catch {}
+    if (v !== undefined && v !== null) m.set(k, v);
+  }
+  return m;
+}
+// Guarda aquí lo que llega de la cuenta (undefined = se borró) y refresca la pantalla
+function escribirSync(cambios){
+  vaciarGuardadoPendiente();
+  let ok = true;
+  try {
+    if ([...cambios.keys()].some(k => k.startsWith("t_"))){
+      let lista = [];
+      try { lista = JSON.parse(localStorage.getItem(CLAVE)) || []; } catch {}
+      if (!Array.isArray(lista)) lista = [];
+      const nueva = [], vistos = new Set();
+      for (const t of lista){   // se mantiene el orden de este dispositivo
+        const k = "t_" + t?.id;
+        if (!t?.id || vistos.has(k)) continue;
+        vistos.add(k);
+        const v = cambios.has(k) ? cambios.get(k) : t;
+        if (v !== undefined) nueva.push(v);
+      }
+      [...cambios].filter(([k, v]) => k.startsWith("t_") && v !== undefined && !vistos.has(k))
+        .sort((a, b) => (a[1].creado || 0) - (b[1].creado || 0))
+        .forEach(([, v]) => nueva.push(v));
+      localStorage.setItem(CLAVE, JSON.stringify(nueva));
+    }
+    for (const [k, ls] of Object.entries(SYNC_SIMPLES)){
+      if (!cambios.has(k)) continue;
+      const v = cambios.get(k);
+      if (v === undefined || v === null) localStorage.removeItem(ls);
+      else localStorage.setItem(ls, k === "horasDia" ? String(v) : JSON.stringify(v));
+    }
+  } catch { ok = false; }   // sin espacio en el navegador
+  recargarDatos();
+  return ok;
+}
+// Vuelve a leer lo guardado (tras sincronizar o si otra pestaña lo cambió). Los trabajos que no
+// cambian conservan el mismo objeto, así lo que tenga a medias la pantalla sigue valiendo.
+function recargarDatos(){
+  const r = cargar();
+  const antes = new Map(trabajos.map(t => [t.id, t]));
+  trabajos = r.lista.map(t => { const v = antes.get(t.id); return v && MotorSync.estable(v) === MotorSync.estable(t) ? v : t; });
+  if (r.cambios) guardar();
+  registros = cargarRitmo(); ritmoCache = null;
+  horasDia = Number(localStorage.getItem("horasDia")) || 3;
+  if (document.activeElement !== $("horasDia")) $("horasDia").value = horasDia;
+  const corria = !!sesion?.inicio;
+  sesion = cargarSesion();
+  if (corria && !sesion?.inicio) soltarPantalla();
+  if (!sesion) cerrarFoco();
+  if (solRef && !solActual()) cerrarSolucion(true);
+  if (!$("fondoDuda").classList.contains("hidden") && !actual()?.pasos[dudaIdx]) cerrarDuda();
+  if (!$("vistaDetalle").classList.contains("hidden") && !actual()){ pintarLista(); mostrar("vistaLista"); }
+  else repintarConservandoFoco();
+}
+// Repinta sin quitarte el cursor si estabas escribiendo (p. ej. en las instrucciones)
+function repintarConservandoFoco(){
+  const a = document.activeElement;
+  const id = a && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.id ? a.id : null;
+  const antes = id && { valor: a.value, ini: a.selectionStart, fin: a.selectionEnd };
+  repintar();
+  const b = id && $(id);
+  if (b && b !== a){
+    if (b.value !== antes.valor){ b.value = antes.valor; b.dispatchEvent(new Event("input", { bubbles: true })); }
+    b.focus();
+    try { b.setSelectionRange(antes.ini, antes.fin); } catch {}
+  }
+}
+
+// --- Estado de la sincronización (botón ☁️ de la cabecera y ventana de la cuenta) ---
+let tEstadoSync = null;
+function alEstadoSync(e){
+  clearTimeout(tEstadoSync);
+  if (e.estado === "sincronizando" && estadoSync.estado !== "sincronizando"){
+    tEstadoSync = setTimeout(() => { estadoSync = e; pintarEstadoCuenta(); }, 700);   // solo se muestra si tarda
+    return;
+  }
+  estadoSync = e;
+  pintarEstadoCuenta();
+}
+function haceCuanto(ms){
+  const s = (Date.now() - ms) / 1000;
+  if (s < 60) return "ahora mismo";
+  if (s < 3600) return `hace ${Math.round(s / 60)} min`;
+  return "a las " + new Date(ms).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+}
+function mensajeErrorSync(e){
+  const c = String(e?.code || ""), m = String(e?.message || e || "");
+  if (c === "sin-espacio") return m;
+  if (c === "42P01" || c === "PGRST205" || /could not find the table|does not exist/i.test(m)) return "Falta crear la tabla en Supabase: ejecuta supabase/esquema.sql en el SQL Editor.";
+  if (c === "42501" || /permission denied|row-level security/i.test(m)) return "Supabase no deja guardar: vuelve a ejecutar supabase/esquema.sql en el SQL Editor.";
+  if (/paused|pausad/i.test(m)) return "Tu proyecto de Supabase está en pausa (pasa tras 7 días sin uso en el plan gratis). Reactívalo en supabase.com.";
+  if (/jwt|token/i.test(m)) return "La sesión ha caducado: cierra sesión y vuelve a entrar.";
+  return m || "No se pudo sincronizar.";
+}
+function textoEstado(){
+  const e = estadoSync;
+  if (e.estado === "sincronizando") return "↻ Sincronizando…";
+  if (e.estado === "ok") return "✓ Sincronizado " + haceCuanto(e.hora || Date.now());
+  if (e.estado === "pendiente") return "• Hay cambios por subir…";
+  if (e.estado === "sinconexion") return "Sin conexión: los cambios se guardan aquí y se subirán cuando vuelva internet.";
+  if (e.estado === "error") return "⚠️ " + mensajeErrorSync(e.error);
+  return "";
+}
+function pintarBotonCuenta(){
+  const b = $("btnCuenta"), dentro = !!usuarioCuenta, e = estadoSync.estado;
+  const sinRed = !dentro && errorCargaSb && !!leerDueno();   // tenía sesión, pero ahora no hay internet
+  const marca = dentro ? ({ ok: "✓", sincronizando: "↻", pendiente: "•", sinconexion: "•", error: "!" }[e] || "") : sinRed ? "•" : "";
+  const titulo = !cuentaConfigurada() ? "Cuenta (sin configurar)" : dentro ? "Tu cuenta. " + textoEstado() : sinRed ? "Sin conexión" : "Iniciar sesión";
+  b.innerHTML = `<span aria-hidden="true">☁️</span>${marca ? `<span class="marca-sync ${dentro ? e : "sinconexion"}" aria-hidden="true">${marca}</span>` : ""}${dentro || sinRed ? "" : `<span class="txt-cuenta">Entrar</span>`}`;
+  b.title = titulo;
+  b.setAttribute("aria-label", titulo);
+}
+function pintarEstadoCuenta(){
+  pintarBotonCuenta();
+  const el = $("cuentaEstado");
+  if (el){ el.textContent = textoEstado(); el.className = "estado-cuenta " + estadoSync.estado; }
+}
+
+// --- Ventana de la cuenta ---
+const MODOS_CUENTA = {
+  entrar: { titulo: "Entrar", boton: "Entrar", clave: "current-password",
+    intro: "Entra para tener tus trabajos en el ordenador y en el móvil. Lo que ya tengas en este navegador se añade a tu cuenta." },
+  crear: { titulo: "Crear cuenta", boton: "Crear cuenta", clave: "new-password",
+    intro: "Elige tu correo y una contraseña (mínimo 6 caracteres). Los trabajos que ya tienes en este navegador se guardarán en tu cuenta." },
+  olvido: { titulo: "Recuperar contraseña", boton: "Enviarme un enlace", clave: null,
+    intro: "Te enviaremos un correo con un enlace para poner una contraseña nueva." },
+  nueva: { titulo: "Contraseña nueva", boton: "Guardar contraseña", clave: "new-password", sinCorreo: true,
+    intro: "Escribe tu contraseña nueva (mínimo 6 caracteres)." },
+};
+function abrirCuenta(){
+  if (modoCuenta !== "nueva") modoCuenta = "entrar";
+  $("fondoCuenta").classList.remove("hidden");
+  ajustarScroll();
+  pintarCuenta();
+}
+function cerrarCuenta(){
+  $("fondoCuenta").classList.add("hidden");
+  if (modoCuenta === "nueva") modoCuenta = "entrar";
+  ajustarScroll();
+}
+function msgCuenta(txt, error){
+  const el = $("cuentaMsg");
+  if (!el) return;
+  el.textContent = txt || "";
+  el.classList.toggle("error", !!error);
+}
+function pintarCuenta(){
+  pintarBotonCuenta();
+  if ($("fondoCuenta").classList.contains("hidden")) return;
+  const c = $("cuentaCuerpo"), titulo = $("cuentaTitulo");
+  const correo = $("cuentaEmail")?.value ?? "";
+  if (!cuentaConfigurada()){
+    titulo.textContent = "Tu cuenta";
+    c.innerHTML = `<p>La cuenta aún no está activada en esta app.</p>
+      <p class="muted">Falta conectar un proyecto gratuito de Supabase (los pasos están en el README, apartado «Cuenta y sincronización»). Mientras tanto, tus trabajos se guardan solo en este navegador.</p>`;
+    return;
+  }
+  if (usuarioCuenta && modoCuenta !== "nueva"){
+    titulo.textContent = "Tu cuenta";
+    c.innerHTML = `<div class="muted">Sesión iniciada como</div>
+      <div class="email-cuenta">${esc(usuarioCuenta.email)}</div>
+      <div id="cuentaEstado" class="estado-cuenta ${estadoSync.estado}">${esc(textoEstado())}</div>
+      <p class="muted">Tus trabajos, el plan de hoy, el temporizador y tu ritmo se guardan en tu cuenta. Entra con este correo en el móvil o en otro ordenador y verás lo mismo.</p>
+      <div class="row" style="margin-top:12px">
+        <button class="ghost" id="btnSyncYa">↻ Sincronizar</button>
+        <button class="peligro" id="btnSalir">Cerrar sesión</button>
+      </div>`;
+    $("btnSyncYa").onclick = () => { if (!motorSync) return; estadoSync = { estado: "sincronizando" }; pintarEstadoCuenta(); motorSync.ya(); };
+    $("btnSalir").onclick = cerrarSesionCuenta;
+    return;
+  }
+  const m = MODOS_CUENTA[modoCuenta] || MODOS_CUENTA.entrar;
+  titulo.textContent = m.titulo;
+  if (!sb){
+    c.innerHTML = errorCargaSb
+      ? `<p>Sin conexión: ahora no se puede entrar.</p>
+         <p class="muted">Tus trabajos siguen guardados en este navegador. Vuelve a intentarlo cuando tengas internet.</p>
+         <button id="btnReintentarCuenta" style="width:100%;margin-top:6px">Reintentar</button>`
+      : `<p class="muted"><span class="spinner"></span>Conectando…</p>`;
+    return;
+  }
+  const enlaces = modoCuenta === "entrar"
+    ? `<button class="mini" data-modo="crear">Crear cuenta</button><button class="mini" data-modo="olvido">¿Has olvidado la contraseña?</button>`
+    : modoCuenta === "nueva" ? "" : `<button class="mini" data-modo="entrar">← Ya tengo cuenta</button>`;
+  c.innerHTML = `<p class="muted" style="margin-top:0">${m.intro}</p>
+    <form id="formCuenta" data-accion="${modoCuenta}" novalidate>
+      ${m.sinCorreo ? "" : `<label for="cuentaEmail">Correo</label>
+      <input type="email" id="cuentaEmail" name="email" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" value="${esc(correo)}">`}
+      ${m.clave ? `<label for="cuentaClave">${modoCuenta === "nueva" ? "Contraseña nueva" : "Contraseña"}</label>
+      <input type="password" id="cuentaClave" name="password" autocomplete="${m.clave}">` : ""}
+      <button type="submit" style="width:100%;margin-top:14px">${m.boton}</button>
+    </form>
+    <div id="cuentaMsg" class="msg-cuenta" role="status"></div>
+    <div class="enlaces-cuenta">${enlaces}</div>`;
+}
+function errorAuth(e){
+  const c = String(e?.code || ""), m = String(e?.message || "");
+  if (c === "invalid_credentials" || /invalid login credentials/i.test(m)) return "Correo o contraseña incorrectos.";
+  if (c === "email_not_confirmed" || /email not confirmed/i.test(m)) return "Antes tienes que confirmar tu correo con el enlace que te enviamos.";
+  if (c === "user_already_exists" || /already registered/i.test(m)) return "Ya hay una cuenta con ese correo. Pulsa «Ya tengo cuenta» y entra.";
+  if (c === "weak_password" || /password should/i.test(m)) return "La contraseña es demasiado débil: usa al menos 6 caracteres.";
+  if (c === "signup_disabled" || /signups not allowed/i.test(m)) return "En esta app no se pueden crear cuentas nuevas.";
+  if (/rate limit/i.test(m) || c.startsWith("over_")) return "Demasiados intentos seguidos. Espera unos minutos y vuelve a probar.";
+  if (/not authorized/i.test(m)) return "Supabase no puede enviar correos a esa dirección: usa el mismo correo que tu cuenta de Supabase.";
+  if (c === "email_address_invalid" || /invalid format|email address .* is invalid/i.test(m)) return "Ese correo no es válido.";
+  if (/failed to fetch|network|load failed/i.test(m)) return "Sin conexión. Inténtalo cuando tengas internet.";
+  return m || "Algo ha fallado. Inténtalo de nuevo.";
+}
+let entrandoConFormulario = false;
+$("btnCuenta").onclick = abrirCuenta;
+$("btnCerrarCuenta").onclick = cerrarCuenta;
+$("fondoCuenta").onclick = (e) => { if (e.target === $("fondoCuenta")) cerrarCuenta(); };
+$("cuentaCuerpo").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-modo]");
+  if (b){ modoCuenta = b.dataset.modo; pintarCuenta(); return; }
+  if (e.target.closest("#btnReintentarCuenta")){ errorCargaSb = false; pintarCuenta(); iniciarCuenta(); }
+});
+$("cuentaCuerpo").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = e.target, boton = f.querySelector("button[type=submit]"), accion = f.dataset.accion;
+  const email = (f.querySelector("#cuentaEmail")?.value || "").trim();
+  const clave = f.querySelector("#cuentaClave")?.value || "";
+  if (accion !== "nueva" && !/^\S+@\S+\.\S+$/.test(email)) return msgCuenta("Escribe tu correo.", true);
+  if (accion !== "olvido" && clave.length < 6) return msgCuenta("La contraseña debe tener al menos 6 caracteres.", true);
+  if (!sb) return msgCuenta("Conectando con tu cuenta… Inténtalo en unos segundos.", true);
+  const texto = boton.textContent;
+  boton.disabled = true; boton.innerHTML = `<span class="spinner"></span>${esc(texto)}`;
+  msgCuenta("");
+  try {
+    if (accion === "entrar" || accion === "crear"){
+      entrandoConFormulario = true;
+      const { data, error } = accion === "entrar"
+        ? await sb.auth.signInWithPassword({ email, password: clave })
+        : await sb.auth.signUp({ email, password: clave, options: { emailRedirectTo: urlApp() } });
+      if (error) throw error;
+      if (accion === "crear" && !data.session){   // «Confirm email» activado en Supabase
+        modoCuenta = "entrar"; pintarCuenta();
+        msgCuenta("Te hemos enviado un correo para confirmar la cuenta. Ábrelo y después entra aquí con tu correo y contraseña.");
+      }
+    } else if (accion === "olvido"){
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: urlApp() });
+      if (error) throw error;
+      msgCuenta("Si ese correo tiene cuenta, te llegará un enlace para poner una contraseña nueva.");
+    } else if (accion === "nueva"){
+      const { error } = await sb.auth.updateUser({ password: clave });
+      if (error) throw error;
+      modoCuenta = "entrar"; pintarCuenta();
+      aviso("✓ Contraseña cambiada");
+    }
+  } catch (err){
+    entrandoConFormulario = false;
+    msgCuenta(errorAuth(err), true);
+  } finally {
+    if (boton.isConnected){ boton.disabled = false; boton.textContent = texto; }
+  }
+});
+
+// --- Sesión ---
+function cargarSupabase(){
+  if (window.supabase?.createClient) return Promise.resolve();
+  return cargarSupabase.p ||= new Promise((ok, mal) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+    s.async = true;
+    s.onload = () => window.supabase?.createClient ? ok() : mal(new Error("No se pudo cargar Supabase"));
+    s.onerror = () => { cargarSupabase.p = null; s.remove(); mal(new Error("Sin conexión")); };
+    document.head.appendChild(s);
+  });
+}
+async function iniciarCuenta(){
+  pintarBotonCuenta();
+  if (!cuentaConfigurada() || sb) return;
+  // Enlace de recuperación caducado o ya usado
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (h.get("error_description")){
+    aviso(h.get("error_code") === "otp_expired" ? "El enlace ha caducado o ya se usó. Pide otro en ☁️ → «¿Has olvidado la contraseña?»." : h.get("error_description"));
+    history.replaceState(null, "", location.pathname + location.search);
+  }
+  try { await cargarSupabase(); }
+  catch {
+    errorCargaSb = true; pintarCuenta();
+    window.addEventListener("online", () => { errorCargaSb = false; iniciarCuenta(); }, { once: true });
+    return;
+  }
+  if (sb) return;
+  try {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_CLAVE, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: "implicit" },
+    });
+  } catch (e){
+    console.error(e);
+    aviso("La configuración de Supabase no es válida: revisa SUPABASE_URL y SUPABASE_CLAVE.");
+    return;
+  }
+  // No se llama a Supabase dentro de este aviso (se puede bloquear): se hace justo después
+  sb.auth.onAuthStateChange((evento, s) => setTimeout(() => alCambiarSesion(evento, s), 0));
+  pintarCuenta();
+}
+let colaSesion = Promise.resolve();
+function alCambiarSesion(evento, s){ colaSesion = colaSesion.then(() => procesarSesion(evento, s)).catch(e => console.error(e)); }
+async function procesarSesion(evento, s){
+  if (evento === "PASSWORD_RECOVERY"){ modoCuenta = "nueva"; abrirCuenta(); }
+  const u = s?.user || null;
+  if ((u?.id || null) === (usuarioCuenta?.id || null)){
+    // La misma sesión de antes (se renovó, etc.): sin repintar formularios a medio escribir
+    if (u){ usuarioCuenta = u; if (modoCuenta !== "nueva") pintarCuenta(); else pintarBotonCuenta(); }
+    else pintarBotonCuenta();
+    return;
+  }
+  motorSync?.parar(); motorSync = null;
+  if (!u){ usuarioCuenta = null; estadoSync = { estado: "fuera" }; pintarCuenta(); return; }
+  const dueno = leerDueno();
+  if (dueno && dueno.uid !== u.id){
+    if (!confirm(`En este navegador están los trabajos de otra cuenta (${dueno.email || "sin correo"}). Para entrar como ${u.email} se quitarán de aquí (siguen guardados en esa cuenta). ¿Continuar?`)){
+      entrandoConFormulario = false;
+      try { await sb.auth.signOut({ scope: "local" }); } catch {}
+      return;
+    }
+    await borrarDatosLocales(dueno.uid);
+  }
+  usuarioCuenta = u;
+  guardarDueno(u);
+  estadoSync = { estado: "sincronizando" };
+  const motor = motorSync = MotorSync.crear({
+    cliente: sb, tabla: TABLA_SYNC, uid: u.id, base: MotorSync.crearBase(nombreBase(u.id)),
+    leer: leerSync, escribir: escribirSync, ocupado: () => iaEnCurso > 0, alEstado: alEstadoSync,
+  });
+  pintarCuenta();
+  const conFormulario = entrandoConFormulario;
+  entrandoConFormulario = false;
+  await motor.ya();
+  if (conFormulario && motorSync === motor && estadoSync.estado === "ok") aviso("☁️ Sesión iniciada: tus trabajos están sincronizados");
+}
+// Quita de este navegador los datos de la app (en la cuenta siguen guardados)
+async function borrarDatosLocales(uidBase){
+  clearTimeout(temporizadorGuardado); temporizadorGuardado = null;
+  [CLAVE, ...Object.values(SYNC_SIMPLES), CLAVE_CUENTA].forEach(k => { try { localStorage.removeItem(k); } catch {} });
+  if (uidBase) await MotorSync.crearBase(nombreBase(uidBase)).vaciar().catch(() => {});
+  recargarDatos();
+  if ($("vistaLista").classList.contains("hidden")) mostrar("vistaLista");
+  pintarLista();
+}
+async function cerrarSesionCuenta(){
+  if (!confirm("Se cerrará la sesión en este dispositivo y se quitarán de aquí tus trabajos (siguen guardados en tu cuenta). ¿Continuar?")) return;
+  const b = $("btnSalir");
+  if (b){ b.disabled = true; b.innerHTML = `<span class="spinner"></span>Cerrando…`; }
+  if (motorSync?.hayPendientes()){
+    await Promise.race([motorSync.ya(), new Promise(r => setTimeout(r, 15000))]);
+    if (estadoSync.estado !== "ok" && !confirm("No se han podido subir los últimos cambios de este dispositivo. Si cierras sesión ahora, se perderán. ¿Cerrar igualmente?")){
+      if (b?.isConnected){ b.disabled = false; b.textContent = "Cerrar sesión"; }
+      return;
+    }
+  }
+  const uid = usuarioCuenta?.id;
+  motorSync?.parar(); motorSync = null;
+  usuarioCuenta = null; estadoSync = { estado: "fuera" };
+  try { await sb.auth.signOut({ scope: "local" }); } catch {}
+  await borrarDatosLocales(uid);
+  modoCuenta = "entrar";
+  pintarCuenta();
+  aviso("Sesión cerrada en este dispositivo");
+}
+// Cuándo se sincroniza: al volver a la app, al recuperar internet, cada minuto con la app a la vista
+// y justo antes de salir (en el móvil, la página se congela al cambiar de app).
+document.addEventListener("visibilitychange", () => {
+  if (!motorSync) return;
+  if (document.visibilityState === "hidden"){ if (motorSync.hayPendientes()) motorSync.ya(); }
+  else motorSync.sincronizar();
+});
+window.addEventListener("focus", () => motorSync?.sincronizar());
+window.addEventListener("online", () => motorSync?.ya());
+window.addEventListener("pagehide", () => { if (motorSync?.hayPendientes()) motorSync.ya(); });
+setInterval(() => { if (document.visibilityState === "visible") motorSync?.sincronizar(); }, 60000);
+// Otra pestaña de la app ha cambiado los datos
+window.addEventListener("storage", (e) => {
+  if ((e.key === null || e.key === CLAVE_CUENTA) && !leerDueno() && motorSync){   // cerró sesión en otra pestaña
+    motorSync.parar(); motorSync = null; usuarioCuenta = null; estadoSync = { estado: "fuera" }; pintarCuenta();
+  }
+  if (e.key === null || e.key === CLAVE || Object.values(SYNC_SIMPLES).includes(e.key)) recargarDatos();
+});
+
 // ---------- Inicio ----------
 { const r = cargar(); trabajos = r.lista; if (r.cambios) guardar(); }
 registros = cargarRitmo();
@@ -1510,6 +2218,7 @@ $("horasDia").value = horasDia;
 pintarDocsForm();
 pintarLista();
 setInterval(tick, 500);
+iniciarCuenta();
 </script>
 </body>
 </html>

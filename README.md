@@ -16,6 +16,7 @@ Con esos datos la app ordena tus trabajos por **prioridad**, reparte el trabajo 
 - **Calendario**: vista mensual con las entregas (🏁), el plan de hoy, la previsión de los próximos días y lo que hiciste cada día. Avisa si a tu ritmo no llegas a alguna entrega.
 - **Temporizador de concentración**: botón ▶ en cada micro meta, con pausa y continuar. Si lo paras, el tiempo queda guardado en el paso y sigue desde ahí. Sobrevive a recargar la página y avisa al llegar al tiempo estimado.
 - **Aprende tu ritmo**: al terminar un paso con el temporizador, la app compara el tiempo real con el estimado por tipo de tarea (lectura, escritura, cálculo…). Los tiempos se ajustan a tu ritmo y la IA lo recibe para dimensionar las micro metas. Solo se guardan números, nunca el contenido de los trabajos.
+- **Cuenta y sincronización (☁️)**: entras con correo y contraseña y ves lo mismo en el ordenador y en el móvil: trabajos, plan de hoy, temporizador y ritmo. Funciona sin conexión y se pone al día al volver. Si cambias el mismo trabajo en dos dispositivos a la vez, se fusionan los cambios. Ver [Cuenta y sincronización](#cuenta-y-sincronización).
 
 ## Estructura
 
@@ -25,7 +26,9 @@ Con esos datos la app ordena tus trabajos por **prioridad**, reparte el trabajo 
 ├── netlify/edge-functions/analizar.js  # Crea o adapta la guía   (/api/analizar)
 ├── netlify/edge-functions/duda.js      # Chat de dudas por paso  (/api/duda)
 ├── netlify/edge-functions/resolver.js  # Micro meta resuelta     (/api/resolver)
-└── public/index.html                   # La app (interfaz, documentos, calendario, temporizador)
+├── public/index.html                   # La app (interfaz, documentos, calendario, temporizador, cuenta)
+├── supabase/esquema.sql                # Tabla y reglas de seguridad de la cuenta (se pega en Supabase)
+└── pruebas/sincronizacion.test.mjs     # Pruebas de la sincronización: node --test pruebas/*.test.mjs
 ```
 
 Las llamadas a la IA son Edge Functions con respuesta en directo (streaming): el texto llega poco a poco, así que no las corta el límite de tiempo de las funciones normales.
@@ -46,6 +49,36 @@ netlify link      # enlaza con tu sitio de Netlify
 netlify dev       # abre http://localhost:8888
 ```
 
+## Cuenta y sincronización
+
+Usa el plan gratuito de [Supabase](https://supabase.com) para el login y para guardar los datos. El navegador habla directamente con Supabase, sin funciones de Netlify, así que **no gasta créditos de Netlify**. Sin cuenta, la app funciona igual que antes, solo en ese navegador.
+
+### Activarla (una vez, unos 5 minutos)
+
+1. Crea una cuenta en supabase.com y un proyecto nuevo (plan Free).
+2. **SQL Editor** → pega el contenido de `supabase/esquema.sql` → **Run**. Crea la tabla y las reglas de seguridad.
+3. **Authentication → Sign In / Providers → Email**: desactiva **Confirm email**. Así no hace falta ningún correo para crear la cuenta.
+4. **Authentication → URL Configuration → Site URL**: pon la dirección de tu app en Netlify (por ejemplo `https://tu-app.netlify.app`).
+5. **Project Settings → API Keys**: copia la **Project URL** y la **Publishable key** (`sb_publishable_…`) y ponlas en `SUPABASE_URL` y `SUPABASE_CLAVE`, al principio del script de `public/index.html`.
+6. En la app pulsa **☁️ → Crear cuenta**. Los trabajos que ya tenías en ese navegador se suben a tu cuenta. En el móvil, **☁️ → Entrar** con el mismo correo.
+
+Opcional: cuando ya tengas tu cuenta, desactiva **Allow new users to sign up** (en Authentication → Sign In / Providers) para que nadie más pueda crear cuentas en tu proyecto.
+
+### Cómo funciona
+
+- **Seguridad**: la Publishable key está hecha para ir en la web. Lo que protege tus datos son las reglas RLS de `esquema.sql`: cada cuenta solo puede leer y cambiar sus propias filas.
+- **Qué se guarda**: cada trabajo es una fila (con sus documentos, pasos, dudas y resoluciones), y aparte el plan de hoy, el temporizador, el ritmo y las horas al día.
+- **Cuándo se sincroniza**: 1,5 s después de cada cambio, al volver a la app, al recuperar internet, antes de cerrar o cambiar de app, y cada minuto con la app a la vista.
+- **Sin conexión**: los cambios se guardan en el dispositivo y se suben al volver.
+- **Cambios a la vez**: cada dispositivo recuerda la última versión que acordó con la nube. Si dos cambian el mismo trabajo, se fusiona campo a campo (por ejemplo, instrucciones en el PC y un paso marcado en el móvil) y no se pierde ninguno. Cada fila lleva un número de versión, así que un dispositivo nunca pisa lo que otro acaba de subir.
+- **Cerrar sesión** quita los trabajos de ese dispositivo; siguen en tu cuenta y vuelven al entrar.
+
+### Límites del plan gratis de Supabase
+
+- 500 MB de base de datos y 5 GB de transferencia al mes: de sobra para una persona.
+- **Si pasan 7 días sin usarse, el proyecto se pausa.** Se reactiva desde el panel de Supabase y los datos no se pierden; mientras tanto la app sigue funcionando en local.
+- El correo de recuperar contraseña solo llega a la dirección de tu cuenta de Supabase (máximo 2 correos por hora). Usa ese mismo correo en la app.
+
 ## Cómo se calcula la prioridad
 
 En `public/index.html`, función `prioridadCon()`:
@@ -64,5 +97,5 @@ El plan de hoy y la previsión del calendario usan el mismo reparto (`repartir()
 
 ## Limitaciones
 
-- Los datos se guardan en el navegador (localStorage): no se sincronizan entre dispositivos. Para eso, el siguiente paso sería Netlify Blobs + Netlify Identity.
+- Sin cuenta, los datos se guardan solo en el navegador (localStorage). Con cuenta, se sincronizan (ver arriba).
 - Los PDF escaneados (imagen sin texto) no se pueden leer; en ese caso pega el texto a mano.
